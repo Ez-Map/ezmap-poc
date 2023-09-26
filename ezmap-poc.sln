@@ -4,6 +4,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{41F11E7F-D94
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EzMap.Domain", "EzMap.Domain\EzMap.Domain.csproj", "{633AC4D5-D664-495A-8083-41E444C0D92C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EzMap.Api", "EzMap.Api\EzMap.Api.csproj", "{7B7EB393-061A-4D4F-B100-62FB4C4807CD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -11,11 +13,16 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{633AC4D5-D664-495A-8083-41E444C0D92C} = {41F11E7F-D94F-49D7-A341-F31DCCAFA179}
+		{7B7EB393-061A-4D4F-B100-62FB4C4807CD} = {41F11E7F-D94F-49D7-A341-F31DCCAFA179}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{633AC4D5-D664-495A-8083-41E444C0D92C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{633AC4D5-D664-495A-8083-41E444C0D92C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{633AC4D5-D664-495A-8083-41E444C0D92C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{633AC4D5-D664-495A-8083-41E444C0D92C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7B7EB393-061A-4D4F-B100-62FB4C4807CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B7EB393-061A-4D4F-B100-62FB4C4807CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B7EB393-061A-4D4F-B100-62FB4C4807CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B7EB393-061A-4D4F-B100-62FB4C4807CD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
