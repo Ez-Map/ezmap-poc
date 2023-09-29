@@ -2,13 +2,11 @@
 
 public class Poi
 {
-    public Poi(string address, string name, Guid userId, User? user)
+    public Poi(string name, string address)
     {
         Id = Guid.NewGuid();
         Address = address;
         Name = name;
-        UserId = userId;
-        User = user;
     }
 
     public Guid Id { get; set; }

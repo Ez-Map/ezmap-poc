@@ -1,18 +1,18 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace EzMap.Domain;
+namespace EzMap.Domain.Models;
 
 public class EzMapContext : DbContext
 {
-    public DbSet<Poi> Pois { get; set; }
+    public DbSet<Poi> Pois=> Set<Poi>();
     
-    public DbSet<User> Users { get; set; }
+    public DbSet<User> Users => Set<User>();
     
     public EzMapContext(DbContextOptions<EzMapContext> options)
         : base(options)
     {
+        
     }
-    
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

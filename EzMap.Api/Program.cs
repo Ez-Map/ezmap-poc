@@ -1,4 +1,6 @@
+using EzMap.Api.Controllers;
 using EzMap.Domain;
+using EzMap.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);

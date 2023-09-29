@@ -1,4 +1,5 @@
 ﻿using System.Runtime.InteropServices.ComTypes;
+using EzMap.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace EzMap.Domain.Repositories;
