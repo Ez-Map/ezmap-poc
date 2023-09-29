@@ -7,14 +7,13 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 {
     public void Configure(EntityTypeBuilder<User> builder)
     {
-        builder.HasNoKey();
-        builder.ToTable("User");
-        builder.Property(u => u.UserId).HasColumnName("UserId");
-        builder.Property(u => u.DisplayName).HasMaxLength(60).IsUnicode(false);
-        builder.Property(u => u.UserName).HasMaxLength(30).IsUnicode(false);
-        builder.Property(u => u.Email).HasMaxLength(50).IsUnicode(false);
-        builder.Property(u => u.Password).HasMaxLength(20).IsUnicode(false);
-        builder.Property(u => u.CreatedDate).IsUnicode(false);
+        builder.ToTable(nameof(User)).HasKey(u => u.Id);
+        builder.Property(u => u.Id);
+        builder.Property(u => u.DisplayName);
+        builder.Property(u => u.UserName).IsUnicode(false);
+        builder.Property(u => u.Email);
+        builder.Property(u => u.Password);
+        builder.Property(u => u.CreatedDate);
 
         builder.HasMany(u => u.SelectedPois)
             .WithOne(p => p.User);
