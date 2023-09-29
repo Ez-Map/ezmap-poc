@@ -4,7 +4,6 @@ using EzMap.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
-
 // Add services to the container.
 builder.Services.AddDbContext<EzMapContext>(
     options =>

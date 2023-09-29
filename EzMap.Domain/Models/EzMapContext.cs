@@ -16,7 +16,7 @@ public class EzMapContext : DbContext
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.HasDefaultSchema("mc")
+        modelBuilder
             .ApplyConfiguration(new PoiConfiguration())
             .ApplyConfiguration(new UserConfiguration());        
         //…
