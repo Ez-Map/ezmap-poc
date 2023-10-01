@@ -1,6 +1,8 @@
-﻿namespace EzMap.Domain;
+﻿using EzMap.Domain.Models;
 
-public class Poi
+namespace EzMap.Domain;
+
+public class Poi : EntityBase<Guid>
 {
     public Poi(string name, string address)
     {
@@ -8,10 +10,9 @@ public class Poi
         Address = address;
         Name = name;
     }
-
-    public Guid Id { get; set; }
+    
     public string Address { get; set; }
-    public string Name { get; set; }
+    public string? Name { get; set; }
     public Guid UserId { get; set; }
     public User? User { get; set; }
 }
