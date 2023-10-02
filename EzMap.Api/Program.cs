@@ -1,6 +1,7 @@
 using EzMap.Api.Controllers;
 using EzMap.Domain;
 using EzMap.Domain.Models;
+using EzMap.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,6 +12,8 @@ builder.Services.AddDbContext<EzMapContext>(
         options.UseSqlServer(builder.Configuration.GetConnectionString("myDb1"));
     }
 );
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IPoiRepository, PoiRepository>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

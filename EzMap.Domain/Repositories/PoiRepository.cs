@@ -4,13 +4,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EzMap.Domain.Repositories;
 
-public interface IPointOfInterests
+public interface IPoiRepository
 {
     public void AddPoi(Poi poi);
 }
 
 
-public class PoiRepository : IPointOfInterests
+public class PoiRepository : IPoiRepository
 {
     private readonly EzMapContext _dbContext ;
 
