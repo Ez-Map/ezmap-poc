@@ -1,8 +1,12 @@
+using System.Text;
 using EzMap.Api.Controllers;
 using EzMap.Domain;
 using EzMap.Domain.Models;
 using EzMap.Domain.Repositories;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
@@ -15,10 +19,59 @@ builder.Services.AddDbContext<EzMapContext>(
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPoiRepository, PoiRepository>();
 
+
+var appSettings = builder.Configuration.GetValue<string>("AppSecret");
+var key = Encoding.ASCII.GetBytes(appSettings);
+builder.Services.AddAuthorization();
+builder.Services.AddAuthentication(x =>
+    {
+        x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(x =>
+    {
+        x.RequireHttpsMetadata = false;
+        x.SaveToken = true;
+        x.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(key),
+            ValidateIssuer = false,
+            ValidateAudience = false
+        };
+    });
+
+
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Description = "Please insert JWT with Bearer into field",
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey
+    });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new[]
+            {
+                "Bearer"
+            }
+        }
+    });
+});
 
 var app = builder.Build();
 
@@ -31,8 +84,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
+
+public partial class Program
+{
+}

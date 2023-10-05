@@ -22,5 +22,9 @@
     <ItemGroup>
       <ProjectReference Include="..\EzMap.Domain\EzMap.Domain.csproj" />
     </ItemGroup>
+    
+    <ItemGroup>
+        <InternalsVisibleTo Include="..\test\EzMap.IntegrationTest\EzMap.IntegrationTest.csproj" />
+    </ItemGroup>
 
 </Project>

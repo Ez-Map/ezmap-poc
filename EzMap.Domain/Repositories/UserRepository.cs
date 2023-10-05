@@ -37,6 +37,10 @@ public class UserRepository : IUserRepository
     {
          var password = _dbContext.Users.Where(x => x.UserName == userSignInDto.Username).Select(x => x.Password).FirstOrDefault();
 
+         var all = _dbContext.Users.ToList();
+         
          return BC.Verify(userSignInDto.Password, password);
     }
+    
+    
 }

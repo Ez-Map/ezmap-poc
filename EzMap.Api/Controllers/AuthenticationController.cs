@@ -1,8 +1,11 @@
-using Azure.Identity;
-using EzMap.Domain;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using EzMap.Domain.Dtos;
 using EzMap.Domain.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 
 namespace EzMap.Api.Controllers;
 
@@ -16,27 +19,28 @@ public class AuthenticationController : ControllerBase
     {
         _logger = logger;
     }
-
-    [HttpPost()]
-    public async Task<IActionResult> CreateUser([FromServices]IUserRepository userRepository, [FromBody] UserCreationDto dto)
+    
+    [HttpPost("SignUp")]
+    public async Task<IActionResult> SignUp([FromServices] IUserRepository userRepository,
+        [FromBody] UserCreationDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.UserName) 
+        if (string.IsNullOrWhiteSpace(dto.UserName)
             || string.IsNullOrWhiteSpace(dto.Password)
             || string.IsNullOrWhiteSpace(dto.Email)
             || string.IsNullOrWhiteSpace(dto.DisplayName)
-            )
+           )
         {
             return BadRequest("Kindly fill all the fields!");
         }
-        
+
         if (await userRepository.CreateUser(dto)) return Ok("Your account is created!");
-        
+
         return new StatusCodeResult(StatusCodes.Status500InternalServerError);
-        
     }
 
-    [HttpPost("/hoangml")]
-    public IActionResult SignIn([FromServices] IUserRepository userRepository, [FromBody] UserSignInDto dto)
+    [HttpPost("SignIn")]
+    public IActionResult SignIn([FromServices] IConfiguration configuration,
+    [FromServices] IUserRepository userRepository, [FromBody] UserSignInDto dto)
     {
         if (string.IsNullOrWhiteSpace(dto.Username)
             || string.IsNullOrWhiteSpace(dto.Password))
@@ -44,7 +48,24 @@ public class AuthenticationController : ControllerBase
             return BadRequest("Either Username or Password is missing");
         }
 
-        if (userRepository.SignIn(dto)) return Ok("You are logged in");
+        if (userRepository.SignIn(dto))
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(configuration["AppSecret"]);
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new Claim[]
+                {
+                    new(ClaimTypes.NameIdentifier, dto.Username),
+                }),
+                Expires = DateTime.UtcNow.AddDays(7),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key),
+                    SecurityAlgorithms.HmacSha256Signature)
+            };
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+
+            return Ok(tokenHandler.WriteToken(token));
+        }
 
         return new StatusCodeResult(StatusCodes.Status500InternalServerError);
     }
