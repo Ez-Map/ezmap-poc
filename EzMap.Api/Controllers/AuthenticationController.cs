@@ -21,7 +21,7 @@ public class AuthenticationController : ControllerBase
     }
     
     [HttpPost("SignUp")]
-    public async Task<IActionResult> SignUp([FromServices] IUserRepository userRepository,
+    public async Task<IActionResult> SignUp([FromServices] IUnitOfWork uow,
         [FromBody] UserCreationDto dto)
     {
         if (string.IsNullOrWhiteSpace(dto.UserName)
@@ -33,14 +33,14 @@ public class AuthenticationController : ControllerBase
             return BadRequest("Kindly fill all the fields!");
         }
 
-        if (await userRepository.CreateUser(dto)) return Ok("Your account is created!");
+        if (await uow.UserRepository.CreateUser(dto)) return Ok("Your account is created!");
 
         return new StatusCodeResult(StatusCodes.Status500InternalServerError);
     }
 
     [HttpPost("SignIn")]
-    public IActionResult SignIn([FromServices] IConfiguration configuration,
-    [FromServices] IUserRepository userRepository, [FromBody] UserSignInDto dto)
+    public async Task<IActionResult> SignIn([FromServices] IConfiguration configuration,
+    [FromServices] IUnitOfWork uow, [FromBody] UserSignInDto dto)
     {
         if (string.IsNullOrWhiteSpace(dto.Username)
             || string.IsNullOrWhiteSpace(dto.Password))
@@ -48,7 +48,9 @@ public class AuthenticationController : ControllerBase
             return BadRequest("Either Username or Password is missing");
         }
 
-        if (userRepository.SignIn(dto))
+        Guid? userId = await uow.UserRepository.SignIn(dto);
+
+        if (userId != null)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(configuration["AppSecret"]);
@@ -56,7 +58,7 @@ public class AuthenticationController : ControllerBase
             {
                 Subject = new ClaimsIdentity(new Claim[]
                 {
-                    new(ClaimTypes.NameIdentifier, dto.Username),
+                    new(ClaimTypes.NameIdentifier, userId.ToString()!),
                 }),
                 Expires = DateTime.UtcNow.AddDays(7),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key),

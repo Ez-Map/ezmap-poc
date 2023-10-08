@@ -14,6 +14,4 @@ public class EntityBase<T>
     public DateTime? LastModifiedDate { get; set; }
     
     public DateTime? DeletedDate { get; set; }
-
-    public Guid? DeletedBy { get; set; }
 }

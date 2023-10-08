@@ -10,7 +10,7 @@ public interface IUserRepository
 {
     Task<bool> CreateUser(UserCreationDto userCreationDto);
 
-    bool SignIn(UserSignInDto userSignInDto);
+    Task<Guid?> SignIn(UserSignInDto userSignInDto);
 }
 
 public class UserRepository : IUserRepository
@@ -33,13 +33,16 @@ public class UserRepository : IUserRepository
         return await _dbContext.SaveChangesAsync() > 0;
     }
 
-    public bool SignIn(UserSignInDto userSignInDto)
+    public async Task<Guid?> SignIn(UserSignInDto userSignInDto)
     {
-         var password = _dbContext.Users.Where(x => x.UserName == userSignInDto.Username).Select(x => x.Password).FirstOrDefault();
+         var dbUser = await _dbContext.Users.FirstAsync(x => x.UserName == userSignInDto.Username);
 
-         var all = _dbContext.Users.ToList();
-         
-         return BC.Verify(userSignInDto.Password, password);
+         if (BC.Verify(userSignInDto.Password, dbUser.Password))
+         {
+             return dbUser.Id;
+         }
+
+         return null;
     }
     
     

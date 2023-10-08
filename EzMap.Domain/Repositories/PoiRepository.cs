@@ -7,9 +7,9 @@ namespace EzMap.Domain.Repositories;
 
 public interface IPoiRepository
 {
-    Task<bool> AddPoi(PoiCreateDto dto);
+    void AddPoi(PoiCreateDto dto);
 
-    Task ReadBooksAsync(CancellationToken token = default);
+    Task ReadPoisAsync(CancellationToken token = default);
 }
 
 
@@ -22,7 +22,7 @@ public class PoiRepository : IPoiRepository
         _dbContext = dbContext;
     }
 
-    public async Task ReadBooksAsync(CancellationToken token = default)
+    public async Task ReadPoisAsync(CancellationToken token = default)
     {
         string query = _dbContext.Pois.ToQueryString();
         Console.WriteLine();
@@ -35,13 +35,9 @@ public class PoiRepository : IPoiRepository
         Console.WriteLine();
     }
 
-    public async Task<bool> AddPoi(PoiCreateDto dto)
+    public void AddPoi(PoiCreateDto dto)
     {
-        Poi poi = new Poi(dto.Name, dto.Address) ;
-        await _dbContext.Pois.AddAsync(poi);
-        int records = await _dbContext.SaveChangesAsync();
-        Console.WriteLine($"{records} record added with {poi.Id}");
-        
-        return records > 0;
+        Poi poi = new Poi(dto.Name, dto.Address, dto.UserId) ; 
+        _dbContext.Pois.Add(poi);
     }
 }

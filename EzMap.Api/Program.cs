@@ -16,9 +16,7 @@ builder.Services.AddDbContext<EzMapContext>(
         options.UseSqlServer(builder.Configuration.GetConnectionString("myDb1"));
     }
 );
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IPoiRepository, PoiRepository>();
-
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 var appSettings = builder.Configuration.GetValue<string>("AppSecret");
 var key = Encoding.ASCII.GetBytes(appSettings);
@@ -72,6 +70,8 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 

@@ -17,11 +17,11 @@ public class PoiControllerTest
         var app = new TestWebAppFactory<Program>();
         var client = app.CreateClient();
         using var scope = app.Services.CreateScope();
-        var poi = new PoiCreateDto()
-        {
-            Name = "THANH NUMBER FAV PLACE",
-            Address = "citygarden",
-        };
+        var poi = new PoiCreateDto
+        (
+            "THANH NUMBER FAV PLACE",
+            "citygarden"
+        );
 
         // act
         var response = await client.PostAsJsonAsync("poi/CreatePoi", poi);
