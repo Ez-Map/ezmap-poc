@@ -10,12 +10,12 @@ using Microsoft.IdentityModel.Tokens;
 namespace EzMap.Api.Controllers;
 
 [ApiController]
-[Route("[controller]")]
-public class AuthenticationController : ControllerBase
+[Route("api/[controller]")]
+public class UserController : ControllerBase
 {
-    private readonly ILogger<AuthenticationController> _logger;
+    private readonly ILogger<UserController> _logger;
 
-    public AuthenticationController(ILogger<AuthenticationController> logger)
+    public UserController(ILogger<UserController> logger)
     {
         _logger = logger;
     }

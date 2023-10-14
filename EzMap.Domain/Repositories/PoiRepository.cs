@@ -10,6 +10,10 @@ public interface IPoiRepository
     void AddPoi(PoiCreateDto dto);
 
     Task ReadPoisAsync(CancellationToken token = default);
+
+    Task UpdatePoiAsync(PoiUpdateDto dto);
+
+    Task DeletePoiAsync(Guid id);
 }
 
 
@@ -39,5 +43,25 @@ public class PoiRepository : IPoiRepository
     {
         Poi poi = new Poi(dto.Name, dto.Address, dto.UserId) ; 
         _dbContext.Pois.Add(poi);
+    }
+
+    public async Task UpdatePoiAsync(PoiUpdateDto dto)
+    {
+        Poi? poi = await _dbContext.Pois.SingleOrDefaultAsync(p => p.DeletedDate == null && p.Id == dto.Id);
+        if (poi != null)
+        {
+            poi.Name = dto.Name;
+            poi.Address = dto.Address;
+        }
+    }
+
+    public async Task DeletePoiAsync(Guid id)
+    {
+        Poi? poi = await _dbContext.Pois.SingleOrDefaultAsync(p => p.DeletedDate == null && p.Id == id);
+        
+        if (poi != null)
+        {
+            poi.DeletedDate = DateTime.Now;
+        }
     }
 }

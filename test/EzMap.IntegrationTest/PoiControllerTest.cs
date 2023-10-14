@@ -36,4 +36,6 @@ public class PoiControllerTest
         Assert.NotNull(dbPoi);
         
     }
+    
+    
 }

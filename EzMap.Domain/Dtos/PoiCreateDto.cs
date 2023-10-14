@@ -12,7 +12,7 @@ public class PoiCreateDto
     public string Name { get; init; }
     public string Address { get; init; }
     public Guid UserId { get; private set; }
-
+    
     public PoiCreateDto WithUserId(Guid userId)
     {
         UserId = userId;
