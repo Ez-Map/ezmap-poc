@@ -47,7 +47,7 @@ public class PoiRepository : IPoiRepository
 
     public async Task UpdatePoiAsync(PoiUpdateDto dto)
     {
-        Poi? poi = await _dbContext.Pois.SingleOrDefaultAsync(p => p.DeletedDate == null && p.Id == dto.Id);
+        Poi? poi = await _dbContext.Pois.FirstOrDefaultAsync(p => p.DeletedDate == null && p.Id == dto.Id);
         if (poi != null)
         {
             poi.Name = dto.Name;

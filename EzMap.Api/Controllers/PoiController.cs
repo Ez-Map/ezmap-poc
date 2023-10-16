@@ -34,7 +34,7 @@ public class PoiController : ControllerBase
             return new StatusCodeResult(StatusCodes.Status500InternalServerError);
     }
 
-    [Authorize]
+   
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update([FromBody] PoiUpdateDto dto,
         [FromServices] IHttpContextAccessor _httpContextAccessor, [FromServices] IUnitOfWork uow)
@@ -52,9 +52,9 @@ public class PoiController : ControllerBase
         return new StatusCodeResult(StatusCodes.Status500InternalServerError);
     }
 
-    [Authorize]
+    
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete([FromBody] Guid id, [FromServices] IUnitOfWork uow)
+    public async Task<IActionResult> Delete(Guid id, [FromServices] IUnitOfWork uow)
     {
         if (string.IsNullOrEmpty(id.ToString()))
         {
