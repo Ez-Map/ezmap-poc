@@ -13,11 +13,11 @@ public class PoiUpdateDto
     public string Name { get; set; }
     public string Address { get; set; }
     
-    // public Guid UserId { get; private set; }
-    //
-    // public PoiUpdateDto WithUserId(Guid userId)
-    // {
-    //     UserId = userId;
-    //     return this;
-    // }
+    public Guid UserId { get; private set; }
+    
+    public PoiUpdateDto WithUserId(Guid userId)
+    {
+        UserId = userId;
+        return this;
+    }
 }

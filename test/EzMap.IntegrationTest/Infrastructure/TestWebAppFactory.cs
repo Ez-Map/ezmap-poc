@@ -1,4 +1,5 @@
 ﻿using System.Data.Common;
+using EzMap.Domain;
 using EzMap.Domain.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -18,6 +19,8 @@ public class TestWebAppFactory<TProgram> : WebApplicationFactory<TProgram> where
         {
             var db = scope.ServiceProvider.GetRequiredService<EzMapContext>();
             db.Database.EnsureCreated();
+            db.Users.Add(new User("string", "string", "string", BCrypt.Net.BCrypt.HashPassword("string"))); 
+            db.SaveChanges();
         }
         
         host.Start();
