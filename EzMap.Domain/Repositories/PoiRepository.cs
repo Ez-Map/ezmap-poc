@@ -28,7 +28,7 @@ public class PoiRepository : IPoiRepository
 
     public async Task ReadPoisAsync(CancellationToken token = default)
     {
-        string query = _dbContext.Pois.ToQueryString();
+        // string query = _dbContext.Pois.ToQueryString();
         Console.WriteLine();
         List<Poi> pois = await _dbContext.Pois.ToListAsync(token);
         foreach (var p in pois)
@@ -47,7 +47,7 @@ public class PoiRepository : IPoiRepository
 
     public async Task UpdatePoiAsync(PoiUpdateDto dto)
     {
-        Poi? poi = await _dbContext.Pois.FirstOrDefaultAsync(p => p.DeletedDate == null && p.Id == dto.Id);
+        Poi? poi = await _dbContext.Pois.FirstOrDefaultAsync(p =>  p.Id == dto.Id);
         if (poi != null)
         {
             poi.Name = dto.Name;
@@ -57,7 +57,7 @@ public class PoiRepository : IPoiRepository
 
     public async Task DeletePoiAsync(Guid id)
     {
-        Poi? poi = await _dbContext.Pois.SingleOrDefaultAsync(p => p.DeletedDate == null && p.Id == id);
+        Poi? poi = await _dbContext.Pois.SingleOrDefaultAsync(p =>  p.Id == id);
         
         if (poi != null)
         {
