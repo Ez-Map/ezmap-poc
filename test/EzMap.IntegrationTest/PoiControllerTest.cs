@@ -99,4 +99,52 @@ public class PoiControllerTest
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         // assert
     }
+
+    [Fact]
+    public async Task GetPoi_GuidProvided_DetailOfPoiShouldBeFound()
+    {
+        var app = new TestWebAppFactory<Program>();
+        var client = app.CreateClient();
+        using var scope = app.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
+        var token = await TestHelper.GetDefaultUserToken(client);
+
+
+        var user = new User("thanh", "thanh", "thanh", "thanh");
+        dbContext.Users.Add(user);
+        var poi = new Poi("home", "59 ntt", user.Id);
+        dbContext.Pois.Add(poi);
+
+        await dbContext.SaveChangesAsync();
+        
+        // act
+        using var response = await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Get, $"api/poi/{poi.Id}", token);
+        response.EnsureSuccessStatusCode();
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        // assert
+    }
+    
+    [Fact]
+    public async Task GetListOfPoi_GuidProvided_DetailOfPoiShouldBeFound()
+    {
+        var app = new TestWebAppFactory<Program>();
+        var client = app.CreateClient();
+        using var scope = app.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
+        var token = await TestHelper.GetDefaultUserToken(client);
+
+
+        var user = new User("thanh", "thanh", "thanh", "thanh");
+        dbContext.Users.Add(user);
+        var poi = new Poi("home", "59 ntt", user.Id);
+        dbContext.Pois.Add(poi);
+
+        await dbContext.SaveChangesAsync();
+        
+        // act
+        using var response = await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Get, $"api/poi/", token);
+        response.EnsureSuccessStatusCode();
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        // assert
+    }
 }

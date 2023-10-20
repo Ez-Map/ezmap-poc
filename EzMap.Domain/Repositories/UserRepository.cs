@@ -15,7 +15,7 @@ public interface IUserRepository
 
 public class UserRepository : IUserRepository
 {
-    private EzMapContext _dbContext;
+    private readonly EzMapContext _dbContext;
 
     public UserRepository(EzMapContext dbContext)
     {
@@ -35,13 +35,12 @@ public class UserRepository : IUserRepository
 
     public async Task<Guid?> SignIn(UserSignInDto userSignInDto)
     {
-         var dbUser = await _dbContext.Users.FirstAsync(x => x.UserName == userSignInDto.Username);
+         var dbUser = await _dbContext.Users.FirstOrDefaultAsync(x => x.UserName == userSignInDto.Username);
 
-         if (BC.Verify(userSignInDto.Password, dbUser.Password))
+         if (dbUser != null)
          {
-             return dbUser.Id;
+             return BC.Verify(userSignInDto.Password, dbUser.Password) ? dbUser.Id : null;
          }
-
          return null;
     }
     

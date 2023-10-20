@@ -71,4 +71,32 @@ public class PoiController : ControllerBase
 
         return new StatusCodeResult(StatusCodes.Status500InternalServerError);
     }
+
+    [Authorize]
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetPoiDetails(Guid id, [FromServices] IUnitOfWork uow)
+    {
+        if (string.IsNullOrEmpty(id.ToString()))
+        {
+            return BadRequest("Please provide a valid id!");
+        }
+
+        var result = await uow.PoiRepository.GetPoiById(id);
+
+        if (result is not null)
+        {
+            return Ok(result);
+        }
+        
+        return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+    }
+
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> GetListPoi([FromServices] IUnitOfWork uow)
+    {
+        var result = await uow.PoiRepository.GetListPoiAsync();
+
+        return result.Count > 0 ? Ok(result) : Ok("Currently, there is no poi!");
+    }
 }
