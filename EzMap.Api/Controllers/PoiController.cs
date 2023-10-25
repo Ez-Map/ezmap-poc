@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using EzMap.Domain;
 using EzMap.Domain.Dtos;
 using EzMap.Domain.Repositories;
 using Microsoft.AspNetCore.Authorization;
@@ -74,28 +75,34 @@ public class PoiController : ControllerBase
 
     [Authorize]
     [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetPoiDetails(Guid id, [FromServices] IUnitOfWork uow)
+    public async Task<IActionResult> GetPoiDetails(Guid id,    [FromServices] IHttpContextAccessor httpContextAccessor, [FromServices] IUnitOfWork uow)
     {
         if (string.IsNullOrEmpty(id.ToString()))
         {
             return BadRequest("Please provide a valid id!");
         }
-
-        var result = await uow.PoiRepository.GetPoiById(id);
-
-        if (result is not null)
-        {
-            return Ok(result);
-        }
         
-        return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+          var successful = Guid.TryParse(httpContextAccessor?.HttpContext?.User
+                    .FindFirstValue(ClaimTypes.NameIdentifier), out Guid tempId);
+        
+        var userId = successful ? (Guid?)tempId : null;
+
+        var result = await uow.PoiRepository.GetPoiById(userId ,id);
+
+        return result is not null ? Ok(result) : new StatusCodeResult(StatusCodes.Status500InternalServerError);
+
     }
 
     [Authorize]
     [HttpGet]
-    public async Task<IActionResult> GetListPoi([FromServices] IUnitOfWork uow)
+    public async Task<IActionResult> GetListPoi([FromServices] IUnitOfWork uow,    [FromServices] IHttpContextAccessor httpContextAccessor)
     {
-        var result = await uow.PoiRepository.GetListPoiAsync();
+        var succssful = Guid.TryParse(httpContextAccessor?.HttpContext?.User
+            .FindFirstValue(ClaimTypes.NameIdentifier), out Guid tempId);
+
+        var userId = succssful ? (Guid?)tempId : null;
+        
+        var result = await uow.PoiRepository.GetListPoiAsync(userId);
 
         return result.Count > 0 ? Ok(result) : Ok("Currently, there is no poi!");
     }

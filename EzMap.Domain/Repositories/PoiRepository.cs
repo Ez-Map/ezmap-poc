@@ -7,15 +7,15 @@ namespace EzMap.Domain.Repositories;
 
 public interface IPoiRepository
 {
-    void AddPoi(PoiCreateDto dto);
+    void AddPoi(PoiCreateDto dto,CancellationToken token = default);
 
-    Task<List<Poi>> GetListPoiAsync(CancellationToken token = default);
+    Task<List<Poi>?> GetListPoiAsync(Guid? userId, CancellationToken token = default);
 
-    Task UpdatePoiAsync(PoiUpdateDto dto);
+    Task UpdatePoiAsync(PoiUpdateDto dto,CancellationToken token = default);
 
-    Task DeletePoiAsync(Guid id);
+    Task DeletePoiAsync(Guid id,CancellationToken token = default);
 
-    Task<Poi?> GetPoiById(Guid id, CancellationToken token = default);
+    Task<Poi?> GetPoiById(Guid? userId, Guid id, CancellationToken token = default);
 }
 
 public class PoiRepository : IPoiRepository
@@ -27,31 +27,30 @@ public class PoiRepository : IPoiRepository
         _dbContext = dbContext;
     }
 
-    public async Task<Poi?> GetPoiById(Guid id, CancellationToken token = default)
+    public async Task<Poi?> GetPoiById(Guid? userId ,Guid id, CancellationToken token = default)
     {
-        Console.WriteLine();
-        var poi = await _dbContext.Pois.FirstOrDefaultAsync(x => x.Id == id, cancellationToken: token);
+        var poi = await _dbContext.Pois.FirstOrDefaultAsync(x => x.Id == id && x.UserId == userId, cancellationToken: token);
         return poi;
     }
 
-    public async Task<List<Poi>> GetListPoiAsync(CancellationToken token = default)
-    {  
-        Console.WriteLine();
-        List<Poi> poi = await _dbContext.Pois.ToListAsync(token);
+    public async Task<List<Poi>?> GetListPoiAsync( Guid? userId ,CancellationToken token = default)
+    {
+        if (userId == null) return null;
+        List<Poi>? listPoi = await _dbContext.Pois.Where(
+            x => x.UserId == userId).ToListAsync(cancellationToken: token);
 
-
-        return poi;
+        return listPoi;
     }
 
-    public void AddPoi(PoiCreateDto dto)
+    public void AddPoi(PoiCreateDto dto,CancellationToken token = default)
     {
         Poi poi = new Poi(dto.Name, dto.Address, dto.UserId);
-        _dbContext.Pois.Add(poi);
+        _dbContext.Pois.AddAsync(poi, token);
     }
 
-    public async Task UpdatePoiAsync(PoiUpdateDto dto)
+    public async Task UpdatePoiAsync(PoiUpdateDto dto,CancellationToken token = default)
     {
-        Poi? poi = await _dbContext.Pois.FirstOrDefaultAsync(p => p.Id == dto.Id);
+        Poi? poi = await _dbContext.Pois.FirstOrDefaultAsync(p => p.Id == dto.Id, cancellationToken: token);
         if (poi != null)
         {
             poi.Name = dto.Name;
@@ -59,9 +58,9 @@ public class PoiRepository : IPoiRepository
         }
     }
 
-    public async Task DeletePoiAsync(Guid id)
+    public async Task DeletePoiAsync(Guid id,CancellationToken token = default)
     {
-        Poi? poi = await _dbContext.Pois.SingleOrDefaultAsync(p => p.Id == id);
+        Poi? poi = await _dbContext.Pois.SingleOrDefaultAsync(p => p.Id == id, cancellationToken: token);
 
         if (poi != null)
         {
