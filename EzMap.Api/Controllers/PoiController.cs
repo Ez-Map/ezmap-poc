@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using EzMap.Api.Services;
 using EzMap.Domain;
 using EzMap.Domain.Dtos;
 using EzMap.Domain.Repositories;
@@ -13,8 +14,8 @@ public class PoiController : ControllerBase
 {
     [Authorize]
     [HttpPost("")]
-    public async Task<IActionResult> Create([FromBody] PoiCreateDto dto,
-        [FromServices] IHttpContextAccessor httpContextAccessor, [FromServices] IUnitOfWork uow)
+    public async Task<IActionResult> Create([FromBody] PoiCreateDto dto, [FromServices] IUnitOfWork uow, 
+        [FromServices] IdentityService identityService)
     {
         if (string.IsNullOrEmpty(dto.Name)
             && string.IsNullOrEmpty(dto.Address))
@@ -22,12 +23,7 @@ public class PoiController : ControllerBase
             return BadRequest("Kindly fill Name, Address fields!");
         }
 
-        var succssful = Guid.TryParse(httpContextAccessor?.HttpContext?.User
-            .FindFirstValue(ClaimTypes.NameIdentifier), out Guid tempId);
-
-        var userId = succssful ? (Guid?)tempId : null; //TODO: fix this
-
-        uow.PoiRepository.AddPoi(dto.WithUserId(userId ?? Guid.NewGuid()));
+        uow.PoiRepository.AddPoi(dto.WithUserId(identityService.GetUserId()));
 
         if (await uow.SaveAsync() > 0) return Ok("Your point of interest is created successfully!");
 
@@ -38,19 +34,15 @@ public class PoiController : ControllerBase
     [Authorize]
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update([FromBody] PoiUpdateDto dto, [FromServices] IUnitOfWork uow,
-        [FromServices] IHttpContextAccessor httpContextAccessor)
+        [FromServices] IdentityService identityService)
     {
         if (string.IsNullOrEmpty(dto.Name)
             && string.IsNullOrEmpty(dto.Address))
         {
             return BadRequest("Kindly fill Name, Address fields!");
         }
-        var succssful = Guid.TryParse(httpContextAccessor?.HttpContext?.User
-            .FindFirstValue(ClaimTypes.NameIdentifier), out Guid tempId);
 
-        var userId = succssful ? (Guid?)tempId : null; //TODO: fix this
-
-        await uow.PoiRepository.UpdatePoiAsync(dto.WithUserId(userId ?? Guid.Empty));
+        await uow.PoiRepository.UpdatePoiAsync(dto.WithUserId(identityService.GetUserId()));
 
         if (await uow.SaveAsync() > 0) return Ok("Your point of interest is updated successfully!");
 
@@ -75,34 +67,26 @@ public class PoiController : ControllerBase
 
     [Authorize]
     [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetPoiDetails(Guid id,    [FromServices] IHttpContextAccessor httpContextAccessor, [FromServices] IUnitOfWork uow)
+    public async Task<IActionResult> GetPoiDetails(Guid id, [FromServices] IdentityService identityService,
+        [FromServices] IUnitOfWork uow)
     {
         if (string.IsNullOrEmpty(id.ToString()))
         {
             return BadRequest("Please provide a valid id!");
         }
-        
-          var successful = Guid.TryParse(httpContextAccessor?.HttpContext?.User
-                    .FindFirstValue(ClaimTypes.NameIdentifier), out Guid tempId);
-        
-        var userId = successful ? (Guid?)tempId : null;
 
-        var result = await uow.PoiRepository.GetPoiById(userId ,id);
+        var result = await uow.PoiRepository.GetPoiById(identityService.GetUserId(), id);
 
         return result is not null ? Ok(result) : new StatusCodeResult(StatusCodes.Status500InternalServerError);
-
     }
 
     [Authorize]
     [HttpGet]
-    public async Task<IActionResult> GetListPoi([FromServices] IUnitOfWork uow,    [FromServices] IHttpContextAccessor httpContextAccessor)
+    public async Task<IActionResult> GetListPoi([FromServices] IUnitOfWork uow,
+        [FromServices] IdentityService identityService)
     {
-        var succssful = Guid.TryParse(httpContextAccessor?.HttpContext?.User
-            .FindFirstValue(ClaimTypes.NameIdentifier), out Guid tempId);
 
-        var userId = succssful ? (Guid?)tempId : null;
-        
-        var result = await uow.PoiRepository.GetListPoiAsync(userId);
+        var result = await uow.PoiRepository.GetListPoiAsync(identityService.GetUserId());
 
         return result.Count > 0 ? Ok(result) : Ok("Currently, there is no poi!");
     }

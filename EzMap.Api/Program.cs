@@ -1,8 +1,10 @@
 using System.Text;
 using EzMap.Api.Controllers;
+using EzMap.Api.Services;
 using EzMap.Domain;
 using EzMap.Domain.Models;
 using EzMap.Domain.Repositories;
+using EzMap.Domain.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -17,6 +19,7 @@ builder.Services.AddDbContext<EzMapContext>(
     }
 );
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IIdentityService, IdentityService>();
 
 var appSettings = builder.Configuration.GetValue<string>("AppSecret");
 var key = Encoding.ASCII.GetBytes(appSettings);
