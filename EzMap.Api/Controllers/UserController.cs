@@ -20,6 +20,7 @@ public class UserController : ControllerBase
         _logger = logger;
     }
     
+    
     [HttpPost("SignUp")]
     public async Task<IActionResult> SignUp([FromServices] IUnitOfWork uow,
         [FromBody] UserCreationDto dto)
@@ -38,6 +39,7 @@ public class UserController : ControllerBase
         return new StatusCodeResult(StatusCodes.Status500InternalServerError);
     }
 
+    
     [HttpPost("SignIn")]
     public async Task<IActionResult> SignIn([FromServices] IConfiguration configuration,
     [FromServices] IUnitOfWork uow, [FromBody] UserSignInDto dto)

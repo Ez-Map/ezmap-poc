@@ -26,7 +26,7 @@ public class AnthenticationControllerTest
 
         var users = await dbContext.Users.ToListAsync();
         // act
-        var response = await client.PostAsJsonAsync("authentication/signin",
+        var response = await client.PostAsJsonAsync("api/user/signin",
             new UserSignInDto()
                 { Username = "redbull", Password = "strawberry" });
 
@@ -50,7 +50,7 @@ public class AnthenticationControllerTest
 
         // act
         // client send http request including a valid user 
-        var response = await client.PostAsJsonAsync("authentication/signup", user);
+        var response = await client.PostAsJsonAsync("api/user/signup", user);
 
 
         // assert

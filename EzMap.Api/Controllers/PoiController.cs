@@ -84,7 +84,7 @@ public class PoiController : ControllerBase
     [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetListPoi([FromServices] IUnitOfWork uow,
-        [FromServices] IdentityService identityService)
+        [FromServices] IIdentityService identityService)
     {
 
         var result = await uow.PoiRepository.GetListPoiAsync(identityService.GetUserId());
