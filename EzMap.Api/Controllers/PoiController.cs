@@ -3,6 +3,7 @@ using EzMap.Api.Services;
 using EzMap.Domain;
 using EzMap.Domain.Dtos;
 using EzMap.Domain.Repositories;
+using EzMap.Domain.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,7 +16,7 @@ public class PoiController : ControllerBase
     [Authorize]
     [HttpPost("")]
     public async Task<IActionResult> Create([FromBody] PoiCreateDto dto, [FromServices] IUnitOfWork uow, 
-        [FromServices] IdentityService identityService)
+        [FromServices] IIdentityService identityService)
     {
         if (string.IsNullOrEmpty(dto.Name)
             && string.IsNullOrEmpty(dto.Address))
@@ -34,7 +35,7 @@ public class PoiController : ControllerBase
     [Authorize]
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update([FromBody] PoiUpdateDto dto, [FromServices] IUnitOfWork uow,
-        [FromServices] IdentityService identityService)
+        [FromServices] IIdentityService identityService)
     {
         if (string.IsNullOrEmpty(dto.Name)
             && string.IsNullOrEmpty(dto.Address))
@@ -67,7 +68,7 @@ public class PoiController : ControllerBase
 
     [Authorize]
     [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetPoiDetails(Guid id, [FromServices] IdentityService identityService,
+    public async Task<IActionResult> GetPoiDetails(Guid id, [FromServices] IIdentityService identityService,
         [FromServices] IUnitOfWork uow)
     {
         if (string.IsNullOrEmpty(id.ToString()))

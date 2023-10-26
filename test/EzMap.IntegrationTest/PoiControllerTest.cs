@@ -147,6 +147,7 @@ public class PoiControllerTest
         
         // act
         using var response = await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Get, $"api/poi/", token);
+        var a = await response.Content.ReadAsStringAsync();
         response.EnsureSuccessStatusCode();
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         
