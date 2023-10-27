@@ -11,7 +11,7 @@ public class Poi : EntityBase<Guid>
         Name = name;
         UserId = userId;
     }
-    
+
     public string Address { get; set; }
     public string Name { get; set; }
     public Guid UserId { get; set; }

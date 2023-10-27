@@ -15,7 +15,7 @@ public class PoiController : ControllerBase
 {
     [Authorize]
     [HttpPost("")]
-    public async Task<IActionResult> Create([FromBody] PoiCreateDto dto, [FromServices] IUnitOfWork uow, 
+    public async Task<IActionResult> Create([FromBody] PoiCreateDto dto, [FromServices] IUnitOfWork uow,
         [FromServices] IIdentityService identityService)
     {
         if (string.IsNullOrEmpty(dto.Name)
@@ -86,9 +86,8 @@ public class PoiController : ControllerBase
     public async Task<IActionResult> GetListPoi([FromServices] IUnitOfWork uow,
         [FromServices] IIdentityService identityService)
     {
-
         var result = await uow.PoiRepository.GetListPoiAsync(identityService.GetUserId());
 
-        return result.Count > 0 ? Ok(result) : Ok("Currently, there is no poi!");
+        return result.Count > 0 ? Ok(result) : new StatusCodeResult(StatusCodes.Status204NoContent);
     }
 }

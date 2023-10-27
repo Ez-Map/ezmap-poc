@@ -14,10 +14,10 @@ public class IdentityService : IIdentityService
 
 
     public Guid GetUserId()
-    { 
+    {
         _ = Guid.TryParse(_httpContextAccessor?.HttpContext?.User
             .FindFirstValue(ClaimTypes.NameIdentifier), out Guid tempId);
-        
+
         return tempId;
     }
 }

@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace EzMap.Domain;
 
-internal class PoiConfiguration :  IEntityTypeConfiguration<Poi>
+internal class PoiConfiguration : IEntityTypeConfiguration<Poi>
 {
     public void Configure(EntityTypeBuilder<Poi> builder)
     {

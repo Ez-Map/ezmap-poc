@@ -23,23 +23,29 @@ public class UnitOfWork : IUnitOfWork
     private UserRepository? _userRepository;
 
 
-    public IPoiRepository PoiRepository { get => _poiRepository ?? new PoiRepository(_context); }
-    public IUserRepository UserRepository { get => _userRepository ?? new UserRepository(_context); }
+    public IPoiRepository PoiRepository
+    {
+        get => _poiRepository ?? new PoiRepository(_context);
+    }
+
+    public IUserRepository UserRepository
+    {
+        get => _userRepository ?? new UserRepository(_context);
+    }
 
     public UnitOfWork(EzMapContext context, IHttpContextAccessor httpContextAccessor)
     {
         _context = context;
         _httpContextAccessor = httpContextAccessor;
     }
-    
-    
-    
+
+
     public async Task<int> SaveAsync()
     {
         SetBaseAuditInfo();
         return await _context.SaveChangesAsync();
     }
-    
+
     public IDbContextTransaction BeginTransaction()
     {
         return _context.Database.BeginTransaction();
@@ -77,7 +83,5 @@ public class UnitOfWork : IUnitOfWork
                     break;
             }
         }
-
     }
 }
-

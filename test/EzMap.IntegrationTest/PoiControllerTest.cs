@@ -15,13 +15,12 @@ public class PoiControllerTest
     [Fact]
     public async Task CreatePoi_CorrectDataProvided_PoiShouldBeCreated()
     {
-        // arrange
         var app = new TestWebAppFactory<Program>();
         var client = app.CreateClient();
         using var scope = app.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
-        
-        // sign in with this user and get token 
+
+
         var token = await TestHelper.GetDefaultUserToken(client);
 
 
@@ -34,7 +33,7 @@ public class PoiControllerTest
 
         var response = await client.RequestAsJsonAsyncWithToken(HttpMethod.Post, "api/poi/", token, poi);
 
-        // assert
+
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var dbPoi = dbContext.Pois.FirstOrDefault(p => p.Name == poi.Name && p.Address == poi.Address);
 
@@ -44,7 +43,6 @@ public class PoiControllerTest
     [Fact]
     public async Task UpdatePoi_CorrectDataProvided_PoiShouldBeUpdated()
     {
-        // arrange
         var app = new TestWebAppFactory<Program>();
         var client = app.CreateClient();
         using var scope = app.Services.CreateScope();
@@ -65,10 +63,9 @@ public class PoiControllerTest
             "citygarden"
         );
 
-        // act
-        var response = await client.RequestAsJsonAsyncWithToken(HttpMethod.Put,$"api/poi/{poi.Id}", token, updateDto);
 
-        // assert
+        var response = await client.RequestAsJsonAsyncWithToken(HttpMethod.Put, $"api/poi/{poi.Id}", token, updateDto);
+
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var dbPoi = dbContext.Pois.FirstOrDefault(p => p.Name == updateDto.Name && p.Address == updateDto.Address);
 
@@ -91,13 +88,10 @@ public class PoiControllerTest
         dbContext.Pois.Add(poi);
 
         await dbContext.SaveChangesAsync();
-
-
-        // act
-        using var response = await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Delete, $"api/poi/{poi.Id}", token);
+        using var response =
+            await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Delete, $"api/poi/{poi.Id}", token);
         response.EnsureSuccessStatusCode();
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        // assert
     }
 
     [Fact]
@@ -114,22 +108,22 @@ public class PoiControllerTest
         dbContext.Pois.Add(poi);
 
         await dbContext.SaveChangesAsync();
-        
-        // act
-        using var response = await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Get, $"api/poi/{poi.Id}", token);
+
+        using var response =
+            await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Get, $"api/poi/{poi.Id}", token);
         response.EnsureSuccessStatusCode();
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        
-        var responsePoi = JsonSerializer.Deserialize<Poi>( await response.Content.ReadAsStringAsync() , new JsonSerializerOptions()
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        });
-        
-        Assert.Equal("home", responsePoi.Name);
-        Assert.Equal("59 ntt", responsePoi.Address);
-        // assert
+
+        var responsePoi = JsonSerializer.Deserialize<Poi>(await response.Content.ReadAsStringAsync(),
+            new JsonSerializerOptions()
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+
+        Assert.Equal(poi.Name, responsePoi.Name);
+        Assert.Equal(poi.Address, responsePoi.Address);
     }
-    
+
     [Fact]
     public async Task GetListOfPoi_GuidProvided_DetailOfPoiShouldBeFound()
     {
@@ -144,22 +138,20 @@ public class PoiControllerTest
         dbContext.Pois.Add(poi);
 
         await dbContext.SaveChangesAsync();
-        
-        // act
+
         using var response = await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Get, $"api/poi/", token);
-        var a = await response.Content.ReadAsStringAsync();
         response.EnsureSuccessStatusCode();
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        
-           
-        var responsePoi = JsonSerializer.Deserialize<List<Poi>>( await response.Content.ReadAsStringAsync() , new JsonSerializerOptions()
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        });
-        
-         
-        Assert.Equal("home", responsePoi[0].Name);
-        Assert.Equal("59 ntt", responsePoi[0].Address);
-        // assert
+
+
+        var responsePoi = JsonSerializer.Deserialize<List<Poi>>(await response.Content.ReadAsStringAsync(),
+            new JsonSerializerOptions()
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+
+
+        Assert.Equal(poi.Name, responsePoi[0].Name);
+        Assert.Equal(poi.Address, responsePoi[0].Address);
     }
 }

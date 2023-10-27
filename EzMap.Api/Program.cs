@@ -13,10 +13,7 @@ using Microsoft.OpenApi.Models;
 var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddDbContext<EzMapContext>(
-    options =>
-    {
-        options.UseSqlServer(builder.Configuration.GetConnectionString("myDb1"));
-    }
+    options => { options.UseSqlServer(builder.Configuration.GetConnectionString("myDb1")); }
 );
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IIdentityService, IdentityService>();
