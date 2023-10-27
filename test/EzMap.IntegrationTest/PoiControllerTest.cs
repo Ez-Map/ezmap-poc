@@ -52,7 +52,7 @@ public class PoiControllerTest
 
         var user = new User("thanh", "thanh", "thanh", "thanh");
         dbContext.Users.Add(user);
-        var poi = new Poi("home", "59 ntt", user.Id);
+        var poi = new Poi("home", "59 ntt", TestUser.DefaultUser.Id);
         dbContext.Pois.Add(poi);
         await dbContext.SaveChangesAsync();
 

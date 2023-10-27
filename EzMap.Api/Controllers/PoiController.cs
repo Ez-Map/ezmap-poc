@@ -43,7 +43,12 @@ public class PoiController : ControllerBase
             return BadRequest("Kindly fill Name, Address fields!");
         }
 
-        await uow.PoiRepository.UpdatePoiAsync(dto.WithUserId(identityService.GetUserId()));
+        var dbPoi =  await uow.PoiRepository.GetPoiById(identityService.GetUserId(), dto.Id);
+
+        if (dbPoi is not null)
+        { 
+            uow.PoiRepository.UpdatePoiAsync(dbPoi, dto.WithUserId(identityService.GetUserId()));
+        }
 
         if (await uow.SaveAsync() > 0) return Ok("Your point of interest is updated successfully!");
 

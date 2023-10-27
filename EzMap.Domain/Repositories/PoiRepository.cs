@@ -11,7 +11,7 @@ public interface IPoiRepository
 
     Task<List<Poi>?> GetListPoiAsync(Guid? userId, CancellationToken token = default);
 
-    Task UpdatePoiAsync(PoiUpdateDto dto, CancellationToken token = default);
+    void UpdatePoiAsync(Poi dbPoi,PoiUpdateDto dto, CancellationToken token = default);
 
     Task DeletePoiAsync(Guid id, CancellationToken token = default);
 
@@ -49,14 +49,10 @@ public class PoiRepository : IPoiRepository
         _dbContext.Pois.AddAsync(poi, token);
     }
 
-    public async Task UpdatePoiAsync(PoiUpdateDto dto, CancellationToken token = default)
+    public void UpdatePoiAsync(Poi dbPoi,PoiUpdateDto dto, CancellationToken token = default)
     {
-        Poi? poi = await _dbContext.Pois.FirstOrDefaultAsync(p => p.Id == dto.Id, cancellationToken: token);
-        if (poi != null)
-        {
-            poi.Name = dto.Name;
-            poi.Address = dto.Address;
-        }
+        dbPoi.Name = dto.Name;
+        dbPoi.Address = dto.Address;
     }
 
     public async Task DeletePoiAsync(Guid id, CancellationToken token = default)
