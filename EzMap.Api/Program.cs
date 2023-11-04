@@ -1,8 +1,10 @@
 using System.Text;
 using EzMap.Api.Controllers;
+using EzMap.Api.Services;
 using EzMap.Domain;
 using EzMap.Domain.Models;
 using EzMap.Domain.Repositories;
+using EzMap.Domain.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -11,12 +13,10 @@ using Microsoft.OpenApi.Models;
 var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddDbContext<EzMapContext>(
-    options =>
-    {
-        options.UseSqlServer(builder.Configuration.GetConnectionString("myDb1"));
-    }
+    options => { options.UseSqlServer(builder.Configuration.GetConnectionString("myDb1")); }
 );
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IIdentityService, IdentityService>();
 
 var appSettings = builder.Configuration.GetValue<string>("AppSecret");
 var key = Encoding.ASCII.GetBytes(appSettings);

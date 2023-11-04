@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace EzMap.Domain;
 
-internal class PoiConfiguration :  IEntityTypeConfiguration<Poi>
+internal class PoiConfiguration : IEntityTypeConfiguration<Poi>
 {
     public void Configure(EntityTypeBuilder<Poi> builder)
     {
@@ -11,5 +11,6 @@ internal class PoiConfiguration :  IEntityTypeConfiguration<Poi>
         builder.Property(p => p.Address);
         builder.Property(p => p.Name);
         builder.HasOne(p => p.User).WithMany(u => u.SelectedPois).HasForeignKey(p => p.UserId);
+        builder.HasQueryFilter(p => p.DeletedDate == null);
     }
 }

@@ -19,7 +19,7 @@ public class TestWebAppFactory<TProgram> : WebApplicationFactory<TProgram> where
         {
             var db = scope.ServiceProvider.GetRequiredService<EzMapContext>();
             db.Database.EnsureCreated();
-            db.Users.Add(new User("string", "string", "string", BCrypt.Net.BCrypt.HashPassword("string"))); 
+            db.Users.Add(TestUser.DefaultUser); 
             db.SaveChanges();
         }
         

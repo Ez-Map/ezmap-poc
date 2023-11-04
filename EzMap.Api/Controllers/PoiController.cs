@@ -1,6 +1,9 @@
 ﻿using System.Security.Claims;
+using EzMap.Api.Services;
+using EzMap.Domain;
 using EzMap.Domain.Dtos;
 using EzMap.Domain.Repositories;
+using EzMap.Domain.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,8 +15,8 @@ public class PoiController : ControllerBase
 {
     [Authorize]
     [HttpPost("")]
-    public async Task<IActionResult> Create([FromBody] PoiCreateDto dto,
-        [FromServices] IHttpContextAccessor httpContextAccessor, [FromServices] IUnitOfWork uow)
+    public async Task<IActionResult> Create([FromBody] PoiCreateDto dto, [FromServices] IUnitOfWork uow,
+        [FromServices] IIdentityService identityService)
     {
         if (string.IsNullOrEmpty(dto.Name)
             && string.IsNullOrEmpty(dto.Address))
@@ -21,12 +24,7 @@ public class PoiController : ControllerBase
             return BadRequest("Kindly fill Name, Address fields!");
         }
 
-        var succssful = Guid.TryParse(httpContextAccessor?.HttpContext?.User
-            .FindFirstValue(ClaimTypes.NameIdentifier), out Guid tempId);
-
-        var userId = succssful ? (Guid?)tempId : null; //TODO: fix this
-
-        uow.PoiRepository.AddPoi(dto.WithUserId(userId ?? Guid.NewGuid()));
+        uow.PoiRepository.AddPoi(dto.WithUserId(identityService.GetUserId()));
 
         if (await uow.SaveAsync() > 0) return Ok("Your point of interest is created successfully!");
 
@@ -37,19 +35,20 @@ public class PoiController : ControllerBase
     [Authorize]
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update([FromBody] PoiUpdateDto dto, [FromServices] IUnitOfWork uow,
-        [FromServices] IHttpContextAccessor httpContextAccessor)
+        [FromServices] IIdentityService identityService)
     {
         if (string.IsNullOrEmpty(dto.Name)
             && string.IsNullOrEmpty(dto.Address))
         {
             return BadRequest("Kindly fill Name, Address fields!");
         }
-        var succssful = Guid.TryParse(httpContextAccessor?.HttpContext?.User
-            .FindFirstValue(ClaimTypes.NameIdentifier), out Guid tempId);
 
-        var userId = succssful ? (Guid?)tempId : null; //TODO: fix this
+        var dbPoi =  await uow.PoiRepository.GetPoiById(identityService.GetUserId(), dto.Id);
 
-        await uow.PoiRepository.UpdatePoiAsync(dto.WithUserId(userId ?? Guid.Empty));
+        if (dbPoi is not null)
+        { 
+            uow.PoiRepository.UpdatePoiAsync(dbPoi, dto.WithUserId(identityService.GetUserId()));
+        }
 
         if (await uow.SaveAsync() > 0) return Ok("Your point of interest is updated successfully!");
 
@@ -70,5 +69,30 @@ public class PoiController : ControllerBase
         if (await uow.SaveAsync() > 0) return Ok("Your point of interest is deleted successfully!");
 
         return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+    }
+
+    [Authorize]
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetPoiDetails(Guid id, [FromServices] IIdentityService identityService,
+        [FromServices] IUnitOfWork uow)
+    {
+        if (string.IsNullOrEmpty(id.ToString()))
+        {
+            return BadRequest("Please provide a valid id!");
+        }
+
+        var result = await uow.PoiRepository.GetPoiById(identityService.GetUserId(), id);
+
+        return result is not null ? Ok(result) : new StatusCodeResult(StatusCodes.Status500InternalServerError);
+    }
+
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> GetListPoi([FromServices] IUnitOfWork uow,
+        [FromServices] IIdentityService identityService)
+    {
+        var result = await uow.PoiRepository.GetListPoiAsync(identityService.GetUserId());
+
+        return result.Count > 0 ? Ok(result) : new StatusCodeResult(StatusCodes.Status204NoContent);
     }
 }

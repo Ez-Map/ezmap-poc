@@ -17,5 +17,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.HasMany(u => u.SelectedPois)
             .WithOne(p => p.User);
+
+        builder.HasQueryFilter(u => u.DeletedDate == null);
     }
 }
