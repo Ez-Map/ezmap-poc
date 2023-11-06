@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using EzMap.Domain.Models;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace EzMap.Domain;
@@ -12,5 +13,14 @@ internal class PoiConfiguration : IEntityTypeConfiguration<Poi>
         builder.Property(p => p.Name);
         builder.HasOne(p => p.User).WithMany(u => u.SelectedPois).HasForeignKey(p => p.UserId);
         builder.HasQueryFilter(p => p.DeletedDate == null);
+
+        builder.HasMany<Collection>(x => x.ListOfPois)
+            .WithMany(x => x.Pois)
+            .UsingEntity(
+                "PoiCollection",
+                l => l.HasOne(typeof(Collection)).WithMany().HasForeignKey("CollectionsId").HasPrincipalKey(nameof(Collection.Id)),
+                r => r.HasOne(typeof(Poi)).WithMany().HasForeignKey("PoisId").HasPrincipalKey(nameof(Poi.Id)),
+                j => j.HasKey("CollectionsId", "PoisId")
+                );
     }
 }
