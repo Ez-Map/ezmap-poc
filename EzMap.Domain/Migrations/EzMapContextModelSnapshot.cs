@@ -22,7 +22,37 @@ namespace EzMap.Domain.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("EzMap.Domain.Poi", b =>
+            modelBuilder.Entity("EzMap.Domain.Models.Itinerary", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeletedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("LastModifiedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("LastModifiedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Itinerary");
+                });
+
+            modelBuilder.Entity("EzMap.Domain.Models.Poi", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -37,9 +67,6 @@ namespace EzMap.Domain.Migrations
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("DeletedBy")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("datetime2");
@@ -64,7 +91,7 @@ namespace EzMap.Domain.Migrations
                     b.ToTable("Poi", (string)null);
                 });
 
-            modelBuilder.Entity("EzMap.Domain.User", b =>
+            modelBuilder.Entity("EzMap.Domain.Models.User", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -75,9 +102,6 @@ namespace EzMap.Domain.Migrations
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("DeletedBy")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("datetime2");
@@ -110,9 +134,24 @@ namespace EzMap.Domain.Migrations
                     b.ToTable("User", (string)null);
                 });
 
-            modelBuilder.Entity("EzMap.Domain.Poi", b =>
+            modelBuilder.Entity("ItineraryPoi", b =>
                 {
-                    b.HasOne("EzMap.Domain.User", "User")
+                    b.Property<Guid>("ItinerariesId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PoisId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("ItinerariesId", "PoisId");
+
+                    b.HasIndex("PoisId");
+
+                    b.ToTable("ItineraryPoi");
+                });
+
+            modelBuilder.Entity("EzMap.Domain.Models.Poi", b =>
+                {
+                    b.HasOne("EzMap.Domain.Models.User", "User")
                         .WithMany("SelectedPois")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -121,7 +160,22 @@ namespace EzMap.Domain.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("EzMap.Domain.User", b =>
+            modelBuilder.Entity("ItineraryPoi", b =>
+                {
+                    b.HasOne("EzMap.Domain.Models.Itinerary", null)
+                        .WithMany()
+                        .HasForeignKey("ItinerariesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EzMap.Domain.Models.Poi", null)
+                        .WithMany()
+                        .HasForeignKey("PoisId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("EzMap.Domain.Models.User", b =>
                 {
                     b.Navigation("SelectedPois");
                 });

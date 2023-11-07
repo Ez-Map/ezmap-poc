@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace EzMap.Domain;
+namespace EzMap.Domain.Models;
 
 public class UserConfiguration : IEntityTypeConfiguration<User>
 {

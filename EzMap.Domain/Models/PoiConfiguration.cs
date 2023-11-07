@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace EzMap.Domain;
+namespace EzMap.Domain.Models;
 
 internal class PoiConfiguration : IEntityTypeConfiguration<Poi>
 {
@@ -12,5 +12,8 @@ internal class PoiConfiguration : IEntityTypeConfiguration<Poi>
         builder.Property(p => p.Name);
         builder.HasOne(p => p.User).WithMany(u => u.SelectedPois).HasForeignKey(p => p.UserId);
         builder.HasQueryFilter(p => p.DeletedDate == null);
+
+        builder.HasMany<Itinerary>(x => x.Itineraries)
+            .WithMany(x => x.Pois);
     }
 }
