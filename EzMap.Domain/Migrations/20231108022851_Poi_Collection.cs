@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace EzMap.Domain.Migrations
 {
     /// <inheritdoc />
-    public partial class PoiItinerary : Migration
+    public partial class Poi_Collection : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -20,7 +20,7 @@ namespace EzMap.Domain.Migrations
                 table: "Poi");
 
             migrationBuilder.CreateTable(
-                name: "Itinerary",
+                name: "PoiCollection",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -34,27 +34,27 @@ namespace EzMap.Domain.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Itinerary", x => x.Id);
+                    table.PrimaryKey("PK_PoiCollection", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
-                name: "ItineraryPoi",
+                name: "PoiPoiCollection",
                 columns: table => new
                 {
-                    ItinerariesId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    PoiCollectionsId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     PoisId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ItineraryPoi", x => new { x.ItinerariesId, x.PoisId });
+                    table.PrimaryKey("PK_PoiPoiCollection", x => new { x.PoiCollectionsId, x.PoisId });
                     table.ForeignKey(
-                        name: "FK_ItineraryPoi_Itinerary_ItinerariesId",
-                        column: x => x.ItinerariesId,
-                        principalTable: "Itinerary",
+                        name: "FK_PoiPoiCollection_PoiCollection_PoiCollectionsId",
+                        column: x => x.PoiCollectionsId,
+                        principalTable: "PoiCollection",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_ItineraryPoi_Poi_PoisId",
+                        name: "FK_PoiPoiCollection_Poi_PoisId",
                         column: x => x.PoisId,
                         principalTable: "Poi",
                         principalColumn: "Id",
@@ -62,8 +62,8 @@ namespace EzMap.Domain.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_ItineraryPoi_PoisId",
-                table: "ItineraryPoi",
+                name: "IX_PoiPoiCollection_PoisId",
+                table: "PoiPoiCollection",
                 column: "PoisId");
         }
 
@@ -71,10 +71,10 @@ namespace EzMap.Domain.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "ItineraryPoi");
+                name: "PoiPoiCollection");
 
             migrationBuilder.DropTable(
-                name: "Itinerary");
+                name: "PoiCollection");
 
             migrationBuilder.AddColumn<Guid>(
                 name: "DeletedBy",

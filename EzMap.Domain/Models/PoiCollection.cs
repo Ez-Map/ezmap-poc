@@ -1,8 +1,8 @@
 ﻿namespace EzMap.Domain.Models;
 
-public class Itinerary : EntityBase<Guid>
+public class PoiCollection : EntityBase<Guid>
 {
-    public Itinerary(string name, string description)
+    public PoiCollection(string name, string description)
     {
         Name = name;
         Description = description;

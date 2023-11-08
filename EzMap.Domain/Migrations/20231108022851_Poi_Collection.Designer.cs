@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EzMap.Domain.Migrations
 {
     [DbContext(typeof(EzMapContext))]
-    [Migration("20231107153207_PoiItinerary")]
-    partial class PoiItinerary
+    [Migration("20231108022851_Poi_Collection")]
+    partial class Poi_Collection
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,7 +25,7 @@ namespace EzMap.Domain.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("EzMap.Domain.Models.Itinerary", b =>
+            modelBuilder.Entity("EzMap.Domain.Models.PoiCollection", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -56,7 +56,7 @@ namespace EzMap.Domain.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Itinerary");
+                    b.ToTable("PoiCollection");
                 });
 
             modelBuilder.Entity("EzMap.Domain.Models.User", b =>
@@ -141,19 +141,19 @@ namespace EzMap.Domain.Migrations
                     b.ToTable("Poi", (string)null);
                 });
 
-            modelBuilder.Entity("ItineraryPoi", b =>
+            modelBuilder.Entity("PoiPoiCollection", b =>
                 {
-                    b.Property<Guid>("ItinerariesId")
+                    b.Property<Guid>("PoiCollectionsId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("PoisId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.HasKey("ItinerariesId", "PoisId");
+                    b.HasKey("PoiCollectionsId", "PoisId");
 
                     b.HasIndex("PoisId");
 
-                    b.ToTable("ItineraryPoi");
+                    b.ToTable("PoiPoiCollection");
                 });
 
             modelBuilder.Entity("EzMap.Domain.Poi", b =>
@@ -167,11 +167,11 @@ namespace EzMap.Domain.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("ItineraryPoi", b =>
+            modelBuilder.Entity("PoiPoiCollection", b =>
                 {
-                    b.HasOne("EzMap.Domain.Models.Itinerary", null)
+                    b.HasOne("EzMap.Domain.Models.PoiCollection", null)
                         .WithMany()
-                        .HasForeignKey("ItinerariesId")
+                        .HasForeignKey("PoiCollectionsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

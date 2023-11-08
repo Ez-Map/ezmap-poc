@@ -17,5 +17,5 @@ public class Poi : EntityBase<Guid>
     public Guid UserId { get; set; }
     public User User { get; set; }
 
-    public List<Itinerary> Itineraries { get; } = new List<Itinerary>();
+    public List<PoiCollection> PoiCollections { get; } = new List<PoiCollection>();
 }
