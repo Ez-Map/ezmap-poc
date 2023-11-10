@@ -1,4 +1,5 @@
 ﻿using EzMap.Domain;
+using EzMap.Domain.Models;
 
 namespace EzMap.IntegrationTest.Infrastructure;
 

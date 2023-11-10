@@ -16,4 +16,6 @@ public class Poi : EntityBase<Guid>
     public string Name { get; set; }
     public Guid UserId { get; set; }
     public User User { get; set; }
+
+    public List<PoiCollection> PoiCollections { get; } = new List<PoiCollection>();
 }

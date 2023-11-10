@@ -1,6 +1,4 @@
-﻿using EzMap.Domain.Models;
-
-namespace EzMap.Domain;
+﻿namespace EzMap.Domain.Models;
 
 public class User : EntityBase<Guid>
 {
