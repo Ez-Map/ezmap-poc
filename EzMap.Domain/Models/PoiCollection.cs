@@ -11,5 +11,6 @@ public class PoiCollection : EntityBase<Guid>
     public string Name { get; set; }
     
     public string Description { get; set; }
-    public List<Poi> Pois { get; } = new List<Poi>();
+    public List<Poi> Pois { get; } = new();
+    public List<Tag> Tags { get; } = new();
 }
