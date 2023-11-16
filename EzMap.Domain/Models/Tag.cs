@@ -16,5 +16,6 @@ public class Tag : EntityBase<Guid>
 
     public List<PoiCollection> Collections { get; } = new();
 
+    public Tag Parent { get; set; }
 }
 

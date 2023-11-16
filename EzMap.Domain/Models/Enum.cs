@@ -4,7 +4,7 @@ namespace EzMap.Domain.Models;
 
 public class Enum
 {
-    public enum DefaultViewType
+    public enum ViewType
     {
         [Display(Name = "Map")]
         Map = 1,
