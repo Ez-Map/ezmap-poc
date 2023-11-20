@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace EzMap.Domain.Models;
+namespace EzMap.Domain.Constants;
 
-public class Enum
+public abstract class PoiEnum
 {
     public enum ViewType
     {

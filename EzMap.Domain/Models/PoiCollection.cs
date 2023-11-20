@@ -1,4 +1,6 @@
-﻿namespace EzMap.Domain.Models;
+﻿using EzMap.Domain.Constants;
+
+namespace EzMap.Domain.Models;
 
 public class PoiCollection : EntityBase<Guid>
 {
@@ -7,13 +9,10 @@ public class PoiCollection : EntityBase<Guid>
         Name = name;
         Description = description;
     }
-    
+
     public string Name { get; set; }
-    
     public string Description { get; set; }
-
-   public Enum.ViewType ViewType { get; set; } = Enum.ViewType.List;
-
-   public List<Poi> Pois { get; } = new();
+    public PoiEnum.ViewType ViewType { get; set; } = PoiEnum.ViewType.List;
+    public List<Poi> Pois { get; } = new();
     public List<Tag> Tags { get; } = new();
 }

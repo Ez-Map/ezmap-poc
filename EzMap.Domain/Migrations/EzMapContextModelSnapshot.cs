@@ -34,9 +34,6 @@ namespace EzMap.Domain.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("DefaultViewType")
-                        .HasColumnType("int");
-
                     b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("datetime2");
 
@@ -56,7 +53,7 @@ namespace EzMap.Domain.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("PoiCollection");
+                    b.ToTable("PoiCollection", (string)null);
                 });
 
             modelBuilder.Entity("EzMap.Domain.Models.Tag", b =>
@@ -90,7 +87,7 @@ namespace EzMap.Domain.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Tag");
+                    b.ToTable("Tag", (string)null);
                 });
 
             modelBuilder.Entity("EzMap.Domain.Models.User", b =>
@@ -187,7 +184,7 @@ namespace EzMap.Domain.Migrations
 
                     b.HasIndex("TagsId");
 
-                    b.ToTable("PoiCollectionTag");
+                    b.ToTable("PoiCollectionTag", (string)null);
                 });
 
             modelBuilder.Entity("PoiPoiCollection", b =>
@@ -202,7 +199,7 @@ namespace EzMap.Domain.Migrations
 
                     b.HasIndex("PoisId");
 
-                    b.ToTable("PoiPoiCollection");
+                    b.ToTable("PoiPoiCollection", (string)null);
                 });
 
             modelBuilder.Entity("EzMap.Domain.Poi", b =>
