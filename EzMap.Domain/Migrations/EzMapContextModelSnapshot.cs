@@ -51,9 +51,12 @@ namespace EzMap.Domain.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("ViewType")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
-                    b.ToTable("PoiCollection", (string)null);
+                    b.ToTable("PoiCollection");
                 });
 
             modelBuilder.Entity("EzMap.Domain.Models.Tag", b =>
@@ -85,9 +88,14 @@ namespace EzMap.Domain.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("ParentId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
 
-                    b.ToTable("Tag", (string)null);
+                    b.HasIndex("ParentId");
+
+                    b.ToTable("Tag");
                 });
 
             modelBuilder.Entity("EzMap.Domain.Models.User", b =>
@@ -184,7 +192,7 @@ namespace EzMap.Domain.Migrations
 
                     b.HasIndex("TagsId");
 
-                    b.ToTable("PoiCollectionTag", (string)null);
+                    b.ToTable("PoiCollectionTag");
                 });
 
             modelBuilder.Entity("PoiPoiCollection", b =>
@@ -199,7 +207,16 @@ namespace EzMap.Domain.Migrations
 
                     b.HasIndex("PoisId");
 
-                    b.ToTable("PoiPoiCollection", (string)null);
+                    b.ToTable("PoiPoiCollection");
+                });
+
+            modelBuilder.Entity("EzMap.Domain.Models.Tag", b =>
+                {
+                    b.HasOne("EzMap.Domain.Models.Tag", "Parent")
+                        .WithMany("Tags")
+                        .HasForeignKey("ParentId");
+
+                    b.Navigation("Parent");
                 });
 
             modelBuilder.Entity("EzMap.Domain.Poi", b =>
@@ -241,6 +258,11 @@ namespace EzMap.Domain.Migrations
                         .HasForeignKey("PoisId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("EzMap.Domain.Models.Tag", b =>
+                {
+                    b.Navigation("Tags");
                 });
 
             modelBuilder.Entity("EzMap.Domain.Models.User", b =>

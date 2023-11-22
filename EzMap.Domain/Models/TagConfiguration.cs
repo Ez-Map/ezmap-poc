@@ -11,7 +11,13 @@ public class TagConfiguration : IEntityTypeConfiguration<Tag>
         builder.ToTable(nameof(Tag)).HasKey(x => x.Id);
         builder.Property(x => x.Name);
         builder.Property(x => x.Description);
-        builder.Property(x => x.Parent);
+
+        builder.HasOne<Tag>(x => x.Parent)
+            .WithMany(x => x.Tags).HasForeignKey(x => x.ParentId).IsRequired(false);
+
+        builder.HasMany<Tag>(x => x.Tags)
+            .WithOne(x => x.Parent).HasForeignKey(x => x.ParentId);
+        
         builder.HasMany<PoiCollection>(x => x.Collections)
             .WithMany(x => x.Tags);
     }

@@ -6,11 +6,18 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace EzMap.Domain.Migrations
 {
     /// <inheritdoc />
-    public partial class Tag_PoiCollection : Migration
+    public partial class PoiCollection_Tag : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AddColumn<int>(
+                name: "ViewType",
+                table: "PoiCollection",
+                type: "int",
+                nullable: false,
+                defaultValue: 0);
+
             migrationBuilder.CreateTable(
                 name: "Tag",
                 columns: table => new
@@ -18,6 +25,7 @@ namespace EzMap.Domain.Migrations
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ParentId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     CreatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     LastModifiedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
@@ -27,6 +35,11 @@ namespace EzMap.Domain.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Tag", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Tag_Tag_ParentId",
+                        column: x => x.ParentId,
+                        principalTable: "Tag",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -57,6 +70,11 @@ namespace EzMap.Domain.Migrations
                 name: "IX_PoiCollectionTag_TagsId",
                 table: "PoiCollectionTag",
                 column: "TagsId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Tag_ParentId",
+                table: "Tag",
+                column: "ParentId");
         }
 
         /// <inheritdoc />
@@ -67,6 +85,10 @@ namespace EzMap.Domain.Migrations
 
             migrationBuilder.DropTable(
                 name: "Tag");
+
+            migrationBuilder.DropColumn(
+                name: "ViewType",
+                table: "PoiCollection");
         }
     }
 }

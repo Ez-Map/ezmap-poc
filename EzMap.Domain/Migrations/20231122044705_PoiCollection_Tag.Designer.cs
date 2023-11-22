@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EzMap.Domain.Migrations
 {
     [DbContext(typeof(EzMapContext))]
-    [Migration("20231114083432_Tag_PoiCollection")]
-    partial class Tag_PoiCollection
+    [Migration("20231122044705_PoiCollection_Tag")]
+    partial class PoiCollection_Tag
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -54,6 +54,9 @@ namespace EzMap.Domain.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("ViewType")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.ToTable("PoiCollection");
@@ -88,7 +91,12 @@ namespace EzMap.Domain.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("ParentId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("ParentId");
 
                     b.ToTable("Tag");
                 });
@@ -205,6 +213,15 @@ namespace EzMap.Domain.Migrations
                     b.ToTable("PoiPoiCollection");
                 });
 
+            modelBuilder.Entity("EzMap.Domain.Models.Tag", b =>
+                {
+                    b.HasOne("EzMap.Domain.Models.Tag", "Parent")
+                        .WithMany("Tags")
+                        .HasForeignKey("ParentId");
+
+                    b.Navigation("Parent");
+                });
+
             modelBuilder.Entity("EzMap.Domain.Poi", b =>
                 {
                     b.HasOne("EzMap.Domain.Models.User", "User")
@@ -244,6 +261,11 @@ namespace EzMap.Domain.Migrations
                         .HasForeignKey("PoisId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("EzMap.Domain.Models.Tag", b =>
+                {
+                    b.Navigation("Tags");
                 });
 
             modelBuilder.Entity("EzMap.Domain.Models.User", b =>

@@ -11,11 +11,14 @@ public class Tag : EntityBase<Guid>
     }
 
     public string Name { get; set; }
-    
+
     public string Description { get; set; }
 
     public List<PoiCollection> Collections { get; } = new();
 
-    public Tag Parent { get; set; }
-}
+    public Guid? ParentId { get; set; }
 
+    public Tag Parent { get; set; }
+
+    public List<Tag> Tags { get; set; }
+}
