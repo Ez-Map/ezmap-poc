@@ -11,5 +11,6 @@ public class PoiCollectionConfiguration : IEntityTypeConfiguration<PoiCollection
         builder.ToTable(nameof(PoiCollection)).HasKey(x => x.Id);
         builder.Property(x => x.Name);
         builder.Property(x => x.Description);
+        builder.Property(x => x.ViewType);
     }
 }
