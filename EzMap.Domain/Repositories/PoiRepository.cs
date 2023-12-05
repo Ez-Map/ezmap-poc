@@ -16,6 +16,8 @@ public interface IPoiRepository
     Task DeletePoiAsync(Guid id, CancellationToken token = default);
 
     Task<Poi?> GetPoiById(Guid? userId, Guid id, CancellationToken token = default);
+
+    Task<List<Poi>?> Search(Guid? userId, string keyword, CancellationToken token = default);
 }
 
 public class PoiRepository : IPoiRepository
@@ -34,15 +36,6 @@ public class PoiRepository : IPoiRepository
         return poi;
     }
 
-    public async Task<List<Poi>?> GetListPoiAsync(Guid? userId, CancellationToken token = default)
-    {
-        if (userId == null) return null;
-        List<Poi>? listPoi = await _dbContext.Pois.Where(
-            x => x.UserId == userId).ToListAsync(cancellationToken: token);
-
-        return listPoi;
-    }
-
     public void AddPoi(PoiCreateDto dto, CancellationToken token = default)
     {
         Poi poi = new Poi(dto.Name, dto.Address, dto.UserId);
@@ -59,9 +52,32 @@ public class PoiRepository : IPoiRepository
     {
         Poi? poi = await _dbContext.Pois.SingleOrDefaultAsync(p => p.Id == id, cancellationToken: token);
 
-        if (poi != null)
+        if (poi is not null)
         {
             poi.DeletedDate = DateTime.Now;
         }
+    }
+    
+    
+
+    public async Task<List<Poi>?> GetListPoiAsync(Guid? userId, CancellationToken token = default)
+    {
+        if (userId == null) return null;
+        List<Poi>? listPoi = await _dbContext.Pois.Where(
+            x => x.UserId == userId).ToListAsync(cancellationToken: token);
+
+        return listPoi;
+    }
+
+    public async Task<List<Poi>?> Search(Guid? userId, string keyword, CancellationToken token = default)
+    {
+        var pois = await _dbContext.Pois.ToListAsync(cancellationToken: token);
+
+        if (!String.IsNullOrEmpty(keyword))
+        {
+            pois = pois.Where(x => (x.Address.ToLower().Contains(keyword.ToLower()) || x.Name.ToLower().Contains(keyword.ToLower())) && x.UserId == userId ).ToList();
+        }
+
+        return pois;
     }
 }

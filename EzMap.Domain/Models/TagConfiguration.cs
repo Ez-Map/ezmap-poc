@@ -17,8 +17,14 @@ public class TagConfiguration : IEntityTypeConfiguration<Tag>
 
         builder.HasMany<Tag>(x => x.Tags)
             .WithOne(x => x.Parent).HasForeignKey(x => x.ParentId);
-        
+
+        builder.HasOne<User>(x => x.User)
+            .WithMany(x => x.SelectedTags).HasForeignKey(x => x.UserId);
+
+
         builder.HasMany<PoiCollection>(x => x.Collections)
             .WithMany(x => x.Tags);
+        
+        builder.HasQueryFilter(x => x.DeletedDate == null);
     }
 }

@@ -15,4 +15,8 @@ public class PoiCollection : EntityBase<Guid>
     public PoiEnum.ViewType ViewType { get; set; } = PoiEnum.ViewType.List;
     public List<Poi> Pois { get; } = new();
     public List<Tag> Tags { get; } = new();
+
+    public Guid UserId { get; set; }
+
+    public User User { get; set; }
 }

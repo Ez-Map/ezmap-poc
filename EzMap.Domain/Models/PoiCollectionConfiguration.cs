@@ -12,5 +12,11 @@ public class PoiCollectionConfiguration : IEntityTypeConfiguration<PoiCollection
         builder.Property(x => x.Name);
         builder.Property(x => x.Description);
         builder.Property(x => x.ViewType);
+
+        builder.HasOne(x => x.User)
+            .WithMany(x => x.SelectedPoiCollections)
+            .HasForeignKey(x => x.UserId);
+        
+        builder.HasQueryFilter(x => x.DeletedDate == null);
     }
 }

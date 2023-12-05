@@ -11,6 +11,8 @@ public interface IUnitOfWork
 {
     IPoiRepository PoiRepository { get; }
     IUserRepository UserRepository { get; }
+    ITagRepository TagRepository { get; }
+    
     Task<int> SaveAsync();
     IDbContextTransaction BeginTransaction();
 }
@@ -21,7 +23,18 @@ public class UnitOfWork : IUnitOfWork
     private readonly IHttpContextAccessor _httpContextAccessor;
     private PoiRepository? _poiRepository;
     private UserRepository? _userRepository;
+    private TagRepository? _tagRepository;
+    private PoiCollectionRepository? _poiCollectionRepository;
 
+    public IPoiCollectionRepository PoiCollectionRepository
+    {
+        get => _poiCollectionRepository ?? new PoiCollectionRepository(_context);
+    }
+
+    public ITagRepository TagRepository
+    {
+        get => _tagRepository ?? new TagRepository(_context);
+    }
 
     public IPoiRepository PoiRepository
     {

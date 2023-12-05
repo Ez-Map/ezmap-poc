@@ -15,5 +15,7 @@ internal class PoiConfiguration : IEntityTypeConfiguration<Poi>
 
         builder.HasMany<PoiCollection>(x => x.PoiCollections)
             .WithMany(x => x.Pois);
+        
+        builder.HasQueryFilter(x => x.DeletedDate == null);
     }
 }

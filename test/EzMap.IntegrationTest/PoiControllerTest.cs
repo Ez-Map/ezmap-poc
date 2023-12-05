@@ -154,4 +154,38 @@ public class PoiControllerTest
         Assert.Equal(poi.Name, responsePoi[0].Name);
         Assert.Equal(poi.Address, responsePoi[0].Address);
     }
+
+    [Fact]
+    public async Task SearchPoi_KeywordProvided_DetailofPoiShouldBeFound()
+    {
+        var app = new TestWebAppFactory<Program>();
+        var client = app.CreateClient();
+        using var scope = app.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
+        var token = await TestHelper.GetDefaultUserToken(client);
+        
+        // create a poi to be searched later
+        var poi1 = new Poi("home", "59 ntt", TestUser.DefaultUser.Id);
+        var poi2 = new Poi("office", "Hue", TestUser.DefaultUser.Id);
+        var poi3 = new Poi("bar", "ruman", TestUser.DefaultUser.Id);
+        dbContext.Pois.AddRange(poi1, poi2, poi3);
+
+        await dbContext.SaveChangesAsync();
+
+        using var response = await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Get, $"api/poi/search?keyword={poi1.Address}", token);
+
+        response.EnsureSuccessStatusCode();
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+
+        var responsePoi = JsonSerializer.Deserialize<List<Poi>>(await response.Content.ReadAsStringAsync(),
+            new JsonSerializerOptions()
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+
+        Assert.True(responsePoi.Count == 1);
+        Assert.Equal(poi1.Name, responsePoi[0].Name);
+        Assert.Equal(poi1.Address, responsePoi[0].Address);
+    }
 }

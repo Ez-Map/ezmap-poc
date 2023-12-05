@@ -95,4 +95,15 @@ public class PoiController : ControllerBase
 
         return result.Count > 0 ? Ok(result) : new StatusCodeResult(StatusCodes.Status204NoContent);
     }
+
+    [Authorize]
+    [HttpGet("search")]
+    public async Task<IActionResult> Search([FromServices] IUnitOfWork uow,
+        [FromServices] IIdentityService identityService, [FromQuery] string keyword)
+    {
+        var result = await uow.PoiRepository.Search(identityService.GetUserId(), keyword);
+        
+        return result.Count > 0 ? Ok(result) : new StatusCodeResult(StatusCodes.Status204NoContent);
+    }
+    
 }

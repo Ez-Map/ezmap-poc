@@ -17,4 +17,8 @@ public class User : EntityBase<Guid>
     public string Password { get; set; }
 
     public List<Poi> SelectedPois { get; } = new List<Poi>();
+
+    public List<PoiCollection> SelectedPoiCollections { get; } = new List<PoiCollection>();
+
+    public List<Tag> SelectedTags { get; } = new List<Tag>();
 }
