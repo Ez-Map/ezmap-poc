@@ -9,7 +9,7 @@ public interface ITagRepository
     Task<Tag?> GetTagById(Guid? userId, Guid id, CancellationToken token = default);
 
     void AddTag(TagCreateDto dto);
-    void UpdateTag(Task<Tag?> dbTag, TagUpdateDto dto);
+    void UpdateTag(Tag? dbTag, TagUpdateDto dto);
 
     Task DeleteTagAsync(Guid id, CancellationToken token = default);
 
@@ -41,10 +41,13 @@ public class TagRepository : ITagRepository
         _dbContext.Tags.Add(tag);
     }
 
-    public void UpdateTag(Task<Tag?> dbTag, TagUpdateDto dto)
+    public void UpdateTag(Tag? dbTag, TagUpdateDto dto)
     {
-        dbTag.Name = dto.Name;
-        dbTag.Description = dto.Description;
+        if (dbTag != null)
+        {
+            dbTag.Name = dto.Name;
+            dbTag.Description = dto.Description;
+        }
     }
 
     public async Task DeleteTagAsync(Guid id, CancellationToken token = default)

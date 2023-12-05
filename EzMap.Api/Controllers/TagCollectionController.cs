@@ -43,7 +43,7 @@ public class TagCollectionController : ControllerBase
             return BadRequest("Kindly fill Name, Description fields!");
         }
 
-        var dbTag = uow.TagRepository.GetTagById(identityService.GetUserId(), dto.Id);
+        var dbTag = await uow.TagRepository.GetTagById(identityService.GetUserId(), dto.Id);
 
         uow.TagRepository.UpdateTag(dbTag, dto.WithUserId(identityService.GetUserId()));
         
