@@ -9,6 +9,8 @@ public interface IPoiCollectionRepository
 {
     Task<PoiCollection?> GetPoiCollectionById(Guid? userId, Guid id, CancellationToken token = default);
 
+    void UpdatePoiCollectionAsync(PoiCollection dbPoiCollection, PoiCollectionUpdateDto dto);
+
     Task<List<PoiCollection>?> GetListPoiCollectionAsync(Guid? userId, CancellationToken token = default);
 
     void AddPoiCollection(PoiCollectionCreateDto dto);
@@ -46,13 +48,12 @@ public class PoiCollectionRepository : IPoiCollectionRepository
 
     public void AddPoiCollection(PoiCollectionCreateDto dto)
     {
-        var poiCollection = new PoiCollection(dto.Name, dto.Description);
+        var poiCollection = new PoiCollection(dto.Name, dto.Description,  dto.UserId);
 
         _dbContext.PoiCollections.Add(poiCollection);
     }
 
-    public void UpdatePoiCollectionAsync(PoiCollection dbPoiCollection, PoiCollectionUpdateDto dto,
-        CancellationToken token = default)
+    public void UpdatePoiCollectionAsync(PoiCollection dbPoiCollection, PoiCollectionUpdateDto dto)
     {
         dbPoiCollection.Name = dto.Name;
         dbPoiCollection.Description = dto.Description;
@@ -81,13 +82,13 @@ public class PoiCollectionRepository : IPoiCollectionRepository
 
         if (!string.IsNullOrEmpty(keyword))
         {
-            poiCollection = poiCollection.Where(x => x.UserId == userId);
+            poiCollection = poiCollection.Where(x => x.UserId == userId).AsQueryable();
 
             poiCollection = poiCollection.Where(
                 x => (x.Name.ToLower().Contains(keyword.ToLower()) ||
                       x.Description.ToLower().Contains(keyword.ToLower()))
-                     || x.Pois.Exists(x => x.Name.ToLower().Contains(keyword.ToLower()))
-                     || x.Tags.Exists(x => x.Name.ToLower().Contains(keyword.ToLower()))
+                     || x.Pois.Any(x => x.Name.ToLower().Contains(keyword.ToLower()))
+                     || x.Tags.Any(x => x.Name.ToLower().Contains(keyword.ToLower()))
             );
         }
 

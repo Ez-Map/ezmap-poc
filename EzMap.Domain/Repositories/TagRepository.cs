@@ -37,7 +37,7 @@ public class TagRepository : ITagRepository
 
     public void AddTag(TagCreateDto dto)
     {
-        Tag tag = new Tag(dto.Name, dto.Description);
+        Tag tag = new Tag(dto.Name, dto.Description, dto.UserId);
         _dbContext.Tags.Add(tag);
     }
 

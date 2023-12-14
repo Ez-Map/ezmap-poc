@@ -5,6 +5,15 @@ namespace EzMap.Domain.Dtos;
 
 public class PoiCollectionUpdateDto
 {
+    public PoiCollectionUpdateDto(Guid id, string name, string description, PoiEnum.ViewType viewType)
+    {
+        Id = id;
+        Name = name;
+        Description = description;
+        ViewType = viewType;
+    }
+
+    public Guid Id { get; set; }
     
     public string Name { get; set; }
     

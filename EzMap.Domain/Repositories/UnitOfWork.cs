@@ -12,6 +12,7 @@ public interface IUnitOfWork
     IPoiRepository PoiRepository { get; }
     IUserRepository UserRepository { get; }
     ITagRepository TagRepository { get; }
+    IPoiCollectionRepository PoiCollectionRepository { get; }
     
     Task<int> SaveAsync();
     IDbContextTransaction BeginTransaction();

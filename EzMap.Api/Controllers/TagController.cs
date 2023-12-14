@@ -9,7 +9,8 @@ namespace EzMap.Api.Controllers;
 
 
 [Route("api/[controller]")]
-public class TagCollectionController : ControllerBase
+[ApiController]
+public class TagController : ControllerBase
 {
     [Authorize]
     [HttpPost("")]
@@ -35,7 +36,7 @@ public class TagCollectionController : ControllerBase
     [Authorize]
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> UpdateTag([FromBody] TagUpdateDto dto, [FromServices] IUnitOfWork uow,
-        [FromServices] IdentityService identityService)
+        [FromServices] IIdentityService identityService)
     {
         if (string.IsNullOrEmpty(dto.Name)
             && string.IsNullOrEmpty(dto.Description))
@@ -45,8 +46,11 @@ public class TagCollectionController : ControllerBase
 
         var dbTag = await uow.TagRepository.GetTagById(identityService.GetUserId(), dto.Id);
 
-        uow.TagRepository.UpdateTag(dbTag, dto.WithUserId(identityService.GetUserId()));
-        
+        if (dbTag is not null)
+        {
+            uow.TagRepository.UpdateTag(dbTag, dto.WithUserId(identityService.GetUserId()));
+        }
+
         if (await uow.SaveAsync() > 0) return Ok("Your tag is updated successfully!");
 
         return new StatusCodeResult(StatusCodes.Status500InternalServerError);

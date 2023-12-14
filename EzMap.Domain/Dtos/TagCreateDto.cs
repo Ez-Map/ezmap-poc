@@ -7,6 +7,8 @@ public class TagCreateDto
         Description = description;
         Name = name;
     }
+    
+    public Guid Id { get; set; }
 
     public string Description { get; set; }
 

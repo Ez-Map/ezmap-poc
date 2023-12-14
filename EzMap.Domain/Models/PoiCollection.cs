@@ -4,10 +4,12 @@ namespace EzMap.Domain.Models;
 
 public class PoiCollection : EntityBase<Guid>
 {
-    public PoiCollection(string name, string description)
+    public PoiCollection(string name, string description, Guid userId)
     {
+        Id = Guid.NewGuid();
         Name = name;
         Description = description;
+        UserId = userId;
     }
 
     public string Name { get; set; }
