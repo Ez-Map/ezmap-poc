@@ -26,9 +26,9 @@ public class PoiCollectionController : ControllerBase
 
         uow.PoiCollectionRepository.AddPoiCollection(dto.WithUserId(identityService.GetUserId()));
 
-        if (await uow.SaveAsync() > 0) return Ok("Your poi collection is created successfully!");
-
-        return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+        return await uow.SaveAsync() > 0
+            ? Ok("Your poi collection is created successfully!")
+            : new StatusCodeResult(StatusCodes.Status500InternalServerError);
     }
 
     [Authorize]
@@ -70,9 +70,9 @@ public class PoiCollectionController : ControllerBase
 
         if (dbPoiCol is not null) uow.PoiCollectionRepository.UpdatePoiCollectionAsync(dbPoiCol, dto);
 
-        if (await uow.SaveAsync() > 0) return Ok("Your poi collection is updated successfully ");
-        
-        return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+        return await uow.SaveAsync() > 0
+            ? Ok("Your poi collection is updated successfully")
+            : new StatusCodeResult(StatusCodes.Status500InternalServerError);
     }
 
     [Authorize]
@@ -83,12 +83,12 @@ public class PoiCollectionController : ControllerBase
         {
             return BadRequest("Please provide a valid id!");
         }
-        
-        await uow.PoiCollectionRepository.DeletePoiCollectionAsync(id);
-        
-        if (await uow.SaveAsync() > 0) return Ok("Your poi collection is deleted successfully!");
 
-        return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+        await uow.PoiCollectionRepository.DeletePoiCollectionAsync(id);
+
+        return await uow.SaveAsync() > 0
+            ? Ok("Your poi collection is deleted successfully!")
+            : new StatusCodeResult(StatusCodes.Status500InternalServerError);
     }
 
     [Authorize]

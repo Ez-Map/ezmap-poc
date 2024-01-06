@@ -48,7 +48,7 @@ public class PoiCollectionRepository : IPoiCollectionRepository
 
     public void AddPoiCollection(PoiCollectionCreateDto dto)
     {
-        var poiCollection = new PoiCollection(dto.Name, dto.Description,  dto.UserId);
+        var poiCollection = new PoiCollection(dto.Name, dto.Description, dto.UserId);
 
         _dbContext.PoiCollections.Add(poiCollection);
     }
@@ -76,8 +76,6 @@ public class PoiCollectionRepository : IPoiCollectionRepository
     public async Task<List<PoiCollection>?> Search(Guid? userId, string keyword, CancellationToken token = default)
     {
         var poiCollection = _dbContext.PoiCollections
-            .Include(poiCollection => poiCollection.Tags)
-            .Include(poiCollection => poiCollection.Pois)
             .AsQueryable();
 
         if (!string.IsNullOrEmpty(keyword))

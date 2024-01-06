@@ -1,24 +1,22 @@
-﻿using System.Security.Cryptography;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace EzMap.Domain.Models;
 
 public class EzMapContext : DbContext
 {
-    public DbSet<Poi> Pois => Set<Poi>();
-    
-    public DbSet<User> Users => Set<User>();
-    
-    public DbSet<PoiCollection> PoiCollections=> Set<PoiCollection>();
+    public DbSet<Poi>? Pois { get; set; }
 
-    public DbSet<Tag> Tags => Set<Tag>();
-    
+    public DbSet<User>? Users { get; set; }
+
+    public DbSet<PoiCollection>? PoiCollections { get; set; }
+
+    public DbSet<Tag>? Tags { get; set; }
+
     public EzMapContext(DbContextOptions<EzMapContext> options)
         : base(options)
     {
-        
     }
-    
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
@@ -28,5 +26,4 @@ public class EzMapContext : DbContext
             .ApplyConfiguration(new TagConfiguration());
         //…
     }
-    
 }

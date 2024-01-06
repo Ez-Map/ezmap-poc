@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace EzMap.Api.Controllers;
 
-
 [Route("api/[controller]")]
 [ApiController]
 public class TagController : ControllerBase
@@ -22,15 +21,11 @@ public class TagController : ControllerBase
         {
             return BadRequest("Kindly fill Name, Description fields!");
         }
-        
+
         uow.TagRepository.AddTag(dto.WithUserId(identityService.GetUserId()));
-
-        if (await uow.SaveAsync() > 0)
-        {
-            return Ok("Your tag is created successfully!");
-        }
-
-        return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+        return await uow.SaveAsync() > 0
+            ? Ok("Your tag is created successfully!")
+            : new StatusCodeResult(StatusCodes.Status500InternalServerError);
     }
 
     [Authorize]
@@ -51,11 +46,11 @@ public class TagController : ControllerBase
             uow.TagRepository.UpdateTag(dbTag, dto.WithUserId(identityService.GetUserId()));
         }
 
-        if (await uow.SaveAsync() > 0) return Ok("Your tag is updated successfully!");
-
-        return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+        return await uow.SaveAsync() > 0
+            ? Ok("Your tag is updated successfully!")
+            : new StatusCodeResult(StatusCodes.Status500InternalServerError);
     }
-    
+
     [Authorize]
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetTagDetails(Guid id, [FromServices] IIdentityService identityService,
@@ -70,7 +65,7 @@ public class TagController : ControllerBase
 
         return result is not null ? Ok(result) : new StatusCodeResult(StatusCodes.Status500InternalServerError);
     }
-    
+
     [Authorize]
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> DeleteTag(Guid id, [FromServices] IUnitOfWork uow)
@@ -82,11 +77,11 @@ public class TagController : ControllerBase
 
         await uow.TagRepository.DeleteTagAsync(id);
 
-        if (await uow.SaveAsync() > 0) return Ok("Your tag is deleted successfully!");
-
-        return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+        return await uow.SaveAsync() > 0
+            ? Ok("Your tag is deleted successfully!")
+            : new StatusCodeResult(StatusCodes.Status500InternalServerError);
     }
-    
+
     [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetListTag([FromServices] IUnitOfWork uow,
@@ -96,14 +91,14 @@ public class TagController : ControllerBase
 
         return result.Count > 0 ? Ok(result) : new StatusCodeResult(StatusCodes.Status204NoContent);
     }
-    
+
     [Authorize]
     [HttpGet("search")]
     public async Task<IActionResult> Search([FromServices] IUnitOfWork uow,
         [FromServices] IIdentityService identityService, [FromQuery] string keyword)
     {
         var result = await uow.TagRepository.Search(identityService.GetUserId(), keyword);
-        
+
         return result.Count > 0 ? Ok(result) : new StatusCodeResult(StatusCodes.Status204NoContent);
     }
 }
