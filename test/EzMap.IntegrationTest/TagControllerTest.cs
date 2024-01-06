@@ -1,47 +1,44 @@
 ﻿using System.Net;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using System.Text.Json;
-using EzMap.Domain;
+using Azure;
 using EzMap.Domain.Dtos;
 using EzMap.Domain.Models;
+using EzMap.Domain.Repositories;
 using EzMap.IntegrationTest.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace EzMap.IntegrationTest;
 
-public class PoiControllerTest
+public class TagControllerTest
 {
     [Fact]
-    public async Task CreatePoi_CorrectDataProvided_PoiShouldBeCreated()
+    public async Task CreateTag_CorrectDataProvided_TagShouldBeCreated()
     {
         var app = new TestWebAppFactory<Program>();
         var client = app.CreateClient();
         using var scope = app.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
 
-
         var token = await TestHelper.GetDefaultUserToken(client);
 
-
-        var poi = new PoiCreateDto
+        var tag = new TagCreateDto
         (
             "THANH NUMBER FAV PLACE",
             "citygarden"
         );
 
-
-        var response = await client.RequestAsJsonAsyncWithToken(HttpMethod.Post, "api/poi/", token, poi);
-
+        var response = await client.RequestAsJsonAsyncWithToken(HttpMethod.Post, "api/tag", token, tag);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var dbPoi = dbContext.Pois.FirstOrDefault(p => p.Name == poi.Name && p.Address == poi.Address);
+        var dbTag = dbContext.Tags.FirstOrDefault(t => t.Name == tag.Name && t.Description == tag.Description);
 
-        Assert.NotNull(dbPoi);
+        Assert.NotNull(dbTag);
     }
 
     [Fact]
-    public async Task UpdatePoi_CorrectDataProvided_PoiShouldBeUpdated()
+    public async Task UpdateTag_CorrectDataProvided_TagShouldBeUpdated()
     {
         var app = new TestWebAppFactory<Program>();
         var client = app.CreateClient();
@@ -52,50 +49,51 @@ public class PoiControllerTest
 
         var user = new User("thanh", "thanh", "thanh", "thanh");
         dbContext.Users.Add(user);
-        var poi = new Poi("home", "59 ntt", TestUser.DefaultUser.Id);
-        dbContext.Pois.Add(poi);
+
+        var tag = new Tag("home", "59 ntt", TestUser.DefaultUser.Id);
+        dbContext.Tags.Add(tag);
+
         await dbContext.SaveChangesAsync();
 
-        var updateDto = new PoiUpdateDto
+        var updateDto = new TagUpdateDto
         (
-            poi.Id,
+            tag.Id,
             "THANH NUMBER FAV PLACE",
             "citygarden"
+            
         );
 
-
-        var response = await client.RequestAsJsonAsyncWithToken(HttpMethod.Put, $"api/poi/{poi.Id}", token, updateDto);
+        var response = await client.RequestAsJsonAsyncWithToken(HttpMethod.Put, $"api/tag/{tag.Id}", token, updateDto);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var dbPoi = dbContext.Pois.FirstOrDefault(p => p.Name == updateDto.Name && p.Address == updateDto.Address);
+        response.EnsureSuccessStatusCode();
+        var dbTag = dbContext.Tags.FirstOrDefault(t =>
+            t.Name == updateDto.Name && t.Description == updateDto.Description);
 
-        Assert.NotNull(dbPoi);
+        Assert.NotNull(dbTag);
     }
 
     [Fact]
-    public async Task DeletePoi_CorrectDataProvided_PoiShouldBeDeleted()
+    public async Task DeleteTag_CorrectDataProvided_PoiShouldBeDeleted()
     {
         var app = new TestWebAppFactory<Program>();
         var client = app.CreateClient();
         using var scope = app.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
         var token = await TestHelper.GetDefaultUserToken(client);
-
-
         var user = new User("thanh", "thanh", "thanh", "thanh");
         dbContext.Users.Add(user);
-        var poi = new Poi("home", "59 ntt", user.Id);
-        dbContext.Pois.Add(poi);
-
+        var tag = new Tag("home", "59 ntt", user.Id);
+        dbContext.Tags.Add(tag);
         await dbContext.SaveChangesAsync();
         using var response =
-            await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Delete, $"api/poi/{poi.Id}", token);
+            await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Delete, $"api/tag/{tag.Id}", token);
         response.EnsureSuccessStatusCode();
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     [Fact]
-    public async Task GetPoi_GuidProvided_DetailOfPoiShouldBeFound()
+    public async Task GetTag_GuidProvided_DetailOfTagShouldBeFound()
     {
         var app = new TestWebAppFactory<Program>();
         var client = app.CreateClient();
@@ -103,29 +101,29 @@ public class PoiControllerTest
         var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
         var token = await TestHelper.GetDefaultUserToken(client);
 
-
-        var poi = new Poi("home", "59 ntt", TestUser.DefaultUser.Id);
-        dbContext.Pois.Add(poi);
+        var tag = new Tag("cafe", "plact where we can find a drink and chill", TestUser.DefaultUser.Id);
+        dbContext.Tags.Add(tag);
 
         await dbContext.SaveChangesAsync();
 
         using var response =
-            await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Get, $"api/poi/{poi.Id}", token);
+            await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Get, $"api/tag/{tag.Id}", token);
+
         response.EnsureSuccessStatusCode();
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var responsePoi = JsonSerializer.Deserialize<Poi>(await response.Content.ReadAsStringAsync(),
+        var responseTag = JsonSerializer.Deserialize<Tag>(await response.Content.ReadAsStringAsync(),
             new JsonSerializerOptions()
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             });
 
-        Assert.Equal(poi.Name, responsePoi.Name);
-        Assert.Equal(poi.Address, responsePoi.Address);
+        Assert.Equal(tag.Name, responseTag.Name);
+        Assert.Equal(tag.Description, responseTag.Description);
     }
 
     [Fact]
-    public async Task GetListOfPoi_GuidProvided_DetailOfPoiShouldBeFound()
+    public async Task GetListOfTag_GuidProvided_DetailOfTagShouldBeFound()
     {
         var app = new TestWebAppFactory<Program>();
         var client = app.CreateClient();
@@ -134,58 +132,58 @@ public class PoiControllerTest
         var token = await TestHelper.GetDefaultUserToken(client);
 
 
-        var poi = new Poi("home", "59 ntt", TestUser.DefaultUser.Id);
-        dbContext.Pois.Add(poi);
+        var tag = new Tag("home", "59 ntt", TestUser.DefaultUser.Id);
+        dbContext.Tags.Add(tag);
 
         await dbContext.SaveChangesAsync();
 
-        using var response = await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Get, $"api/poi/", token);
+        using var response = await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Get, $"api/tag/", token);
         response.EnsureSuccessStatusCode();
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
 
-        var responsePoi = JsonSerializer.Deserialize<List<Poi>>(await response.Content.ReadAsStringAsync(),
+        var responsePoi = JsonSerializer.Deserialize<List<Tag>>(await response.Content.ReadAsStringAsync(),
             new JsonSerializerOptions()
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             });
 
 
-        Assert.Equal(poi.Name, responsePoi[0].Name);
-        Assert.Equal(poi.Address, responsePoi[0].Address);
+        Assert.Equal(tag.Name, responsePoi[0].Name);
+        Assert.Equal(tag.Description, responsePoi[0].Description);
     }
 
     [Fact]
-    public async Task SearchPoi_KeywordProvided_DetailofPoiShouldBeFound()
+    public async Task SearchTag_KeywordProvided_DetailOfTagShouldBeFound()
     {
         var app = new TestWebAppFactory<Program>();
         var client = app.CreateClient();
         using var scope = app.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
         var token = await TestHelper.GetDefaultUserToken(client);
-        
+
         // create a poi to be searched later
-        var poi1 = new Poi("home", "59 ntt", TestUser.DefaultUser.Id);
-        var poi2 = new Poi("office", "Hue", TestUser.DefaultUser.Id);
-        var poi3 = new Poi("bar", "ruman", TestUser.DefaultUser.Id);
-        dbContext.Pois.AddRange(poi1, poi2, poi3);
+        var tag1 = new Tag("home", "59 ntt", TestUser.DefaultUser.Id);
+        var tag2 = new Tag("office", "Hue", TestUser.DefaultUser.Id);
+        var tag3 = new Tag("bar", "ruman", TestUser.DefaultUser.Id);
+        dbContext.Tags.AddRange(tag1, tag2, tag3);
 
         await dbContext.SaveChangesAsync();
 
-        using var response = await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Get, $"api/poi/search?keyword={poi1.Address}", token);
+        using var response =
+            await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Get, $"api/tag/search?keyword={tag1.Name}",
+                token);
 
         response.EnsureSuccessStatusCode();
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-
-        var responsePoi = JsonSerializer.Deserialize<List<Poi>>(await response.Content.ReadAsStringAsync(),
+        var responseTag = JsonSerializer.Deserialize<List<Tag>>(await response.Content.ReadAsStringAsync(),
             new JsonSerializerOptions()
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             });
 
-        Assert.True(responsePoi.Count == 1);
-        Assert.Equal(poi1.Name, responsePoi[0].Name);
-        Assert.Equal(poi1.Address, responsePoi[0].Address);
+        Assert.True(responseTag.Count == 1);
+        Assert.Equal(tag1.Name, responseTag[0].Name);
+        Assert.Equal(tag1.Description, responseTag[0].Description);
     }
 }

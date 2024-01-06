@@ -26,9 +26,9 @@ public class PoiController : ControllerBase
 
         uow.PoiRepository.AddPoi(dto.WithUserId(identityService.GetUserId()));
 
-        if (await uow.SaveAsync() > 0) return Ok("Your point of interest is created successfully!");
-
-        return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+        return await uow.SaveAsync() > 0
+            ? Ok("Your point of interest is created successfully!")
+            : new StatusCodeResult(StatusCodes.Status500InternalServerError);
     }
 
 
@@ -43,16 +43,16 @@ public class PoiController : ControllerBase
             return BadRequest("Kindly fill Name, Address fields!");
         }
 
-        var dbPoi =  await uow.PoiRepository.GetPoiById(identityService.GetUserId(), dto.Id);
+        var dbPoi = await uow.PoiRepository.GetPoiById(identityService.GetUserId(), dto.Id);
 
         if (dbPoi is not null)
-        { 
+        {
             uow.PoiRepository.UpdatePoiAsync(dbPoi, dto.WithUserId(identityService.GetUserId()));
         }
 
-        if (await uow.SaveAsync() > 0) return Ok("Your point of interest is updated successfully!");
-
-        return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+        return await uow.SaveAsync() > 0
+            ? Ok("Your point of interest is updated successfully!")
+            : new StatusCodeResult(StatusCodes.Status500InternalServerError);
     }
 
     [Authorize]
@@ -66,9 +66,9 @@ public class PoiController : ControllerBase
 
         await uow.PoiRepository.DeletePoiAsync(id);
 
-        if (await uow.SaveAsync() > 0) return Ok("Your point of interest is deleted successfully!");
-
-        return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+        return await uow.SaveAsync() > 0
+            ? Ok("Your point of interest is deleted successfully!")
+            : new StatusCodeResult(StatusCodes.Status500InternalServerError);
     }
 
     [Authorize]
@@ -92,6 +92,16 @@ public class PoiController : ControllerBase
         [FromServices] IIdentityService identityService)
     {
         var result = await uow.PoiRepository.GetListPoiAsync(identityService.GetUserId());
+
+        return result.Count > 0 ? Ok(result) : new StatusCodeResult(StatusCodes.Status204NoContent);
+    }
+
+    [Authorize]
+    [HttpGet("search")]
+    public async Task<IActionResult> Search([FromServices] IUnitOfWork uow,
+        [FromServices] IIdentityService identityService, [FromQuery] string keyword)
+    {
+        var result = await uow.PoiRepository.Search(identityService.GetUserId(), keyword);
 
         return result.Count > 0 ? Ok(result) : new StatusCodeResult(StatusCodes.Status204NoContent);
     }
