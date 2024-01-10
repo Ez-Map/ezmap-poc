@@ -1,4 +1,5 @@
 ﻿using Azure.Core;
+using FluentValidation;
 
 namespace EzMap.Domain.Dtos;
 
@@ -17,5 +18,14 @@ public class PoiCreateDto
     {
         UserId = userId;
         return this;
+    }
+}
+
+public class PoiCreateDtoValidator : AbstractValidator<PoiCreateDto>
+{
+    public PoiCreateDtoValidator() 
+    {
+        RuleFor(x => x.Name).NotEmpty().WithMessage("Name is required.");
+        RuleFor(x => x.Address).NotEmpty().WithMessage("Address is required.");
     }
 }

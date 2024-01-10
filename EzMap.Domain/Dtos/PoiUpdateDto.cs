@@ -1,4 +1,6 @@
-﻿namespace EzMap.Domain.Dtos;
+﻿using FluentValidation;
+
+namespace EzMap.Domain.Dtos;
 
 public class PoiUpdateDto
 {
@@ -19,5 +21,15 @@ public class PoiUpdateDto
     {
         UserId = userId;
         return this;
+    }
+}
+
+public class PoiUpdateDtoValidator : AbstractValidator<PoiUpdateDto>
+{
+    public PoiUpdateDtoValidator()
+    {
+        RuleFor(x => x.Id).NotNull().WithMessage("ID is required.");
+        RuleFor(x => x.Name).NotEmpty().WithMessage("Name is required.");
+        RuleFor(x => x.Address).NotEmpty().WithMessage("Address is required.");
     }
 }

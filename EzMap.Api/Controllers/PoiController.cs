@@ -4,6 +4,7 @@ using EzMap.Domain;
 using EzMap.Domain.Dtos;
 using EzMap.Domain.Repositories;
 using EzMap.Domain.Services;
+using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,10 +19,12 @@ public class PoiController : ControllerBase
     public async Task<IActionResult> Create([FromBody] PoiCreateDto dto, [FromServices] IUnitOfWork uow,
         [FromServices] IIdentityService identityService)
     {
-        if (string.IsNullOrEmpty(dto.Name)
-            && string.IsNullOrEmpty(dto.Address))
+        var validator = new PoiCreateDtoValidator();
+        var validationResult = validator.Validate(dto);
+        
+        if (!validationResult.IsValid)
         {
-            return BadRequest("Kindly fill Name, Address fields!");
+            return BadRequest("Not able to create your POI!");
         }
 
         uow.PoiRepository.AddPoi(dto.WithUserId(identityService.GetUserId()));
@@ -37,12 +40,15 @@ public class PoiController : ControllerBase
     public async Task<IActionResult> Update([FromBody] PoiUpdateDto dto, [FromServices] IUnitOfWork uow,
         [FromServices] IIdentityService identityService)
     {
-        if (string.IsNullOrEmpty(dto.Name)
-            && string.IsNullOrEmpty(dto.Address))
+        
+        var validator = new PoiUpdateDtoValidator();
+        var validationResult = validator.Validate(dto);
+        
+        if (!validationResult.IsValid)
         {
-            return BadRequest("Kindly fill Name, Address fields!");
+            return BadRequest("Not able to update your POI!");
         }
-
+        
         var dbPoi = await uow.PoiRepository.GetPoiById(identityService.GetUserId(), dto.Id);
 
         if (dbPoi is not null)
