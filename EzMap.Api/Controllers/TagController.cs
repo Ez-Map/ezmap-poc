@@ -16,10 +16,12 @@ public class TagController : ControllerBase
     public async Task<IActionResult> Create([FromBody] TagCreateDto dto, [FromServices] IUnitOfWork uow,
         [FromServices] IIdentityService identityService)
     {
-        if (string.IsNullOrEmpty(dto.Name)
-            && string.IsNullOrEmpty(dto.Description))
+        var validator = new TagCreateDtoValidator();
+        var validationResult = validator.Validate(dto);
+
+        if (!validationResult.IsValid)
         {
-            return BadRequest("Kindly fill Name, Description fields!");
+            return BadRequest("Not able to create your Tag!");
         }
 
         uow.TagRepository.AddTag(dto.WithUserId(identityService.GetUserId()));
@@ -33,10 +35,12 @@ public class TagController : ControllerBase
     public async Task<IActionResult> UpdateTag([FromBody] TagUpdateDto dto, [FromServices] IUnitOfWork uow,
         [FromServices] IIdentityService identityService)
     {
-        if (string.IsNullOrEmpty(dto.Name)
-            && string.IsNullOrEmpty(dto.Description))
+        var validator = new TagUpdateDtoValidator();
+        var validationResult = validator.Validate(dto);
+
+        if (!validationResult.IsValid)
         {
-            return BadRequest("Kindly fill Name, Description fields!");
+            return BadRequest("Not able to update your Tag!");
         }
 
         var dbTag = await uow.TagRepository.GetTagById(identityService.GetUserId(), dto.Id);

@@ -10,10 +10,11 @@ public class PoiCreateDto
         Name = name;
         Address = address;
     }
+
     public string Name { get; init; }
     public string Address { get; init; }
     public Guid UserId { get; private set; }
-    
+
     public PoiCreateDto WithUserId(Guid userId)
     {
         UserId = userId;
@@ -23,9 +24,10 @@ public class PoiCreateDto
 
 public class PoiCreateDtoValidator : AbstractValidator<PoiCreateDto>
 {
-    public PoiCreateDtoValidator() 
+    public PoiCreateDtoValidator()
     {
-        RuleFor(x => x.Name).NotEmpty().WithMessage("Name is required.");
+        RuleFor(x => x.Name).NotEmpty().WithMessage("Name is required.").MaximumLength(50)
+            .WithMessage("Name cannot exceed 50 characters.");
         RuleFor(x => x.Address).NotEmpty().WithMessage("Address is required.");
     }
 }

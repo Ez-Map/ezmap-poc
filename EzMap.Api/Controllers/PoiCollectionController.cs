@@ -18,10 +18,12 @@ public class PoiCollectionController : ControllerBase
         [FromServices] IUnitOfWork uow,
         [FromServices] IIdentityService identityService)
     {
-        if (string.IsNullOrEmpty(dto.Name)
-            && string.IsNullOrEmpty(dto.Description))
+        var validator = new PoiCollectionCreateDtoValidator();
+        var validationResult = validator.Validate(dto);
+
+        if (!validationResult.IsValid)
         {
-            return BadRequest("Kindly fill Name, Address fields!");
+            return BadRequest("Not able to create your Poi Collection!");
         }
 
         uow.PoiCollectionRepository.AddPoiCollection(dto.WithUserId(identityService.GetUserId()));
@@ -60,10 +62,12 @@ public class PoiCollectionController : ControllerBase
     public async Task<IActionResult> Update([FromBody] PoiCollectionUpdateDto dto, [FromServices] IUnitOfWork uow,
         [FromServices] IIdentityService identityService)
     {
-        if (string.IsNullOrEmpty(dto.Name)
-            && string.IsNullOrEmpty(dto.Description))
+        var validator = new PoiCollectionUpdateDtoValidator();
+        var validationResult = validator.Validate(dto);
+
+        if (!validationResult.IsValid)
         {
-            return BadRequest("Kindly fill Name, Description fields!");
+            return BadRequest("Not able to update your Poi Collection!");
         }
 
         var dbPoiCol = await uow.PoiCollectionRepository.GetPoiCollectionById(identityService.GetUserId(), dto.Id);

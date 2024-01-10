@@ -45,7 +45,7 @@ public class AnthenticationControllerTest
         using var scope = app.Services.CreateScope();
         var user = new UserCreationDto()
         {
-            UserName = "bytetum", DisplayName = "hoangml", Email = "notdeciced@gmail.com", Password = "bytetum",
+            UserName = "bytetum", DisplayName = "hoangml", Email = "notdeciced@gmail.com", Password = "bytetumaaaaa",
         };
 
         // act

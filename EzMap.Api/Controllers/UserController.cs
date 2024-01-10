@@ -25,13 +25,12 @@ public class UserController : ControllerBase
     public async Task<IActionResult> SignUp([FromServices] IUnitOfWork uow,
         [FromBody] UserCreationDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.UserName)
-            || string.IsNullOrWhiteSpace(dto.Password)
-            || string.IsNullOrWhiteSpace(dto.Email)
-            || string.IsNullOrWhiteSpace(dto.DisplayName)
-           )
+        var validator = new UserCreationDtoValidator();
+        var validationResult = validator.Validate(dto);
+
+        if (!validationResult.IsValid)
         {
-            return BadRequest("Kindly fill all the fields!");
+            return BadRequest("Not able to create your account!");
         }
 
         if (await uow.UserRepository.CreateUser(dto)) return Ok("Your account is created!");
@@ -44,10 +43,12 @@ public class UserController : ControllerBase
     public async Task<IActionResult> SignIn([FromServices] IConfiguration configuration,
         [FromServices] IUnitOfWork uow, [FromBody] UserSignInDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Username)
-            || string.IsNullOrWhiteSpace(dto.Password))
+        var validator = new UserSignInDtoValidator();
+        var validationResult = validator.Validate(dto);
+
+        if (!validationResult.IsValid)
         {
-            return BadRequest("Either Username or Password is missing");
+            return BadRequest("Login failed!");
         }
 
         Guid? userId = await uow.UserRepository.SignIn(dto);
