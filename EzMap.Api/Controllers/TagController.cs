@@ -16,14 +16,11 @@ public class TagController : ControllerBase
     public async Task<IActionResult> Create([FromBody] TagCreateDto dto, [FromServices] IUnitOfWork uow,
         [FromServices] IIdentityService identityService)
     {
-        var validator = new TagCreateDtoValidator();
-        var validationResult = validator.Validate(dto);
-
-        if (!validationResult.IsValid)
+        if (!ModelState.IsValid)
         {
             return BadRequest("Not able to create your Tag!");
         }
-
+        
         uow.TagRepository.AddTag(dto.WithUserId(identityService.GetUserId()));
         return await uow.SaveAsync() > 0
             ? Ok("Your tag is created successfully!")
@@ -35,10 +32,7 @@ public class TagController : ControllerBase
     public async Task<IActionResult> UpdateTag([FromBody] TagUpdateDto dto, [FromServices] IUnitOfWork uow,
         [FromServices] IIdentityService identityService)
     {
-        var validator = new TagUpdateDtoValidator();
-        var validationResult = validator.Validate(dto);
-
-        if (!validationResult.IsValid)
+        if (!ModelState.IsValid)
         {
             return BadRequest("Not able to update your Tag!");
         }

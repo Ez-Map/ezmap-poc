@@ -25,10 +25,7 @@ public class UserController : ControllerBase
     public async Task<IActionResult> SignUp([FromServices] IUnitOfWork uow,
         [FromBody] UserCreationDto dto)
     {
-        var validator = new UserCreationDtoValidator();
-        var validationResult = validator.Validate(dto);
-
-        if (!validationResult.IsValid)
+        if (!ModelState.IsValid)
         {
             return BadRequest("Not able to create your account!");
         }
@@ -43,10 +40,7 @@ public class UserController : ControllerBase
     public async Task<IActionResult> SignIn([FromServices] IConfiguration configuration,
         [FromServices] IUnitOfWork uow, [FromBody] UserSignInDto dto)
     {
-        var validator = new UserSignInDtoValidator();
-        var validationResult = validator.Validate(dto);
-
-        if (!validationResult.IsValid)
+        if (!ModelState.IsValid)
         {
             return BadRequest("Login failed!");
         }

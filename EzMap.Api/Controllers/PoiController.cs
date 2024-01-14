@@ -19,10 +19,7 @@ public class PoiController : ControllerBase
     public async Task<IActionResult> Create([FromBody] PoiCreateDto dto, [FromServices] IUnitOfWork uow,
         [FromServices] IIdentityService identityService)
     {
-        var validator = new PoiCreateDtoValidator();
-        var validationResult = validator.Validate(dto);
-        
-        if (!validationResult.IsValid)
+        if (!ModelState.IsValid)
         {
             return BadRequest("Not able to create your POI!");
         }
@@ -40,11 +37,7 @@ public class PoiController : ControllerBase
     public async Task<IActionResult> Update([FromBody] PoiUpdateDto dto, [FromServices] IUnitOfWork uow,
         [FromServices] IIdentityService identityService)
     {
-        
-        var validator = new PoiUpdateDtoValidator();
-        var validationResult = validator.Validate(dto);
-        
-        if (!validationResult.IsValid)
+        if (!ModelState.IsValid)
         {
             return BadRequest("Not able to update your POI!");
         }

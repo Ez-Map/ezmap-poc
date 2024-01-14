@@ -18,10 +18,7 @@ public class PoiCollectionController : ControllerBase
         [FromServices] IUnitOfWork uow,
         [FromServices] IIdentityService identityService)
     {
-        var validator = new PoiCollectionCreateDtoValidator();
-        var validationResult = validator.Validate(dto);
-
-        if (!validationResult.IsValid)
+        if (!ModelState.IsValid)
         {
             return BadRequest("Not able to create your Poi Collection!");
         }
@@ -62,10 +59,7 @@ public class PoiCollectionController : ControllerBase
     public async Task<IActionResult> Update([FromBody] PoiCollectionUpdateDto dto, [FromServices] IUnitOfWork uow,
         [FromServices] IIdentityService identityService)
     {
-        var validator = new PoiCollectionUpdateDtoValidator();
-        var validationResult = validator.Validate(dto);
-
-        if (!validationResult.IsValid)
+        if (!ModelState.IsValid)
         {
             return BadRequest("Not able to update your Poi Collection!");
         }
