@@ -26,8 +26,7 @@ public class PoiCreateDtoValidator : AbstractValidator<PoiCreateDto>
 {
     public PoiCreateDtoValidator()
     {
-        RuleFor(x => x.Name).NotEmpty().WithMessage("Name is required.").MaximumLength(50)
-            .WithMessage("Name cannot exceed 50 characters.");
-        RuleFor(x => x.Address).NotEmpty().WithMessage("Address is required.");
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(50);
+        RuleFor(x => x.Address).NotEmpty();
     }
 }

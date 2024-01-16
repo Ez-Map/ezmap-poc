@@ -30,10 +30,9 @@ public class TagUpdateDtoValidator : AbstractValidator<TagUpdateDto>
 {
     public TagUpdateDtoValidator()
     {
-        RuleFor(x => x.Id).NotEmpty().WithMessage("ID is required.");
-        RuleFor(x => x.Description).NotEmpty().WithMessage("Description is required.");
-        RuleFor(x => x.Name).NotEmpty().WithMessage("Name is required.").MaximumLength(50)
-            .WithMessage("Name cannot exceed 50 characters.");
+        RuleFor(x => x.Id).NotEmpty();
+        RuleFor(x => x.Description).NotEmpty();
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(50);
         // Assuming UserId is not required for updates
     }
 }

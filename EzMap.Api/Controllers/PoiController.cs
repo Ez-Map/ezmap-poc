@@ -19,11 +19,6 @@ public class PoiController : ControllerBase
     public async Task<IActionResult> Create([FromBody] PoiCreateDto dto, [FromServices] IUnitOfWork uow,
         [FromServices] IIdentityService identityService)
     {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest("Not able to create your POI!");
-        }
-
         uow.PoiRepository.AddPoi(dto.WithUserId(identityService.GetUserId()));
 
         return await uow.SaveAsync() > 0
@@ -37,11 +32,6 @@ public class PoiController : ControllerBase
     public async Task<IActionResult> Update([FromBody] PoiUpdateDto dto, [FromServices] IUnitOfWork uow,
         [FromServices] IIdentityService identityService)
     {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest("Not able to update your POI!");
-        }
-        
         var dbPoi = await uow.PoiRepository.GetPoiById(identityService.GetUserId(), dto.Id);
 
         if (dbPoi is not null)

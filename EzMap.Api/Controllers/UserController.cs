@@ -25,11 +25,6 @@ public class UserController : ControllerBase
     public async Task<IActionResult> SignUp([FromServices] IUnitOfWork uow,
         [FromBody] UserCreationDto dto)
     {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest("Not able to create your account!");
-        }
-
         if (await uow.UserRepository.CreateUser(dto)) return Ok("Your account is created!");
 
         return new StatusCodeResult(StatusCodes.Status500InternalServerError);
@@ -40,11 +35,6 @@ public class UserController : ControllerBase
     public async Task<IActionResult> SignIn([FromServices] IConfiguration configuration,
         [FromServices] IUnitOfWork uow, [FromBody] UserSignInDto dto)
     {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest("Login failed!");
-        }
-
         Guid? userId = await uow.UserRepository.SignIn(dto);
 
         if (userId != null)

@@ -29,8 +29,7 @@ public class TagCreateDtoValidator : AbstractValidator<TagCreateDto>
 {
     public TagCreateDtoValidator()
     {
-        RuleFor(x => x.Description).NotEmpty().WithMessage("Description is required.");
-        RuleFor(x => x.Name).NotEmpty().WithMessage("Name is required.").MaximumLength(50)
-            .WithMessage("Name cannot exceed 50 characters.");
+        RuleFor(x => x.Description).NotEmpty();
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(50);
     }
 }

@@ -1,12 +1,14 @@
 ﻿using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using EzMap.Domain;
 using EzMap.Domain.Dtos;
 using EzMap.Domain.Models;
 using EzMap.IntegrationTest.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities.Resources;
 
 namespace EzMap.IntegrationTest;
 
@@ -38,6 +40,48 @@ public class PoiControllerTest
         var dbPoi = dbContext.Pois.FirstOrDefault(p => p.Name == poi.Name && p.Address == poi.Address);
 
         Assert.NotNull(dbPoi);
+    }
+
+    [Fact]
+    public async Task UpdatePoi_IncorrectDataProvided_CorrectMessageShouldBeReturned()
+    {
+        var app = new TestWebAppFactory<Program>();
+        var client = app.CreateClient();
+        using var scope = app.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
+
+        var token = await TestHelper.GetDefaultUserToken(client);
+
+        var user = new User("thanh", "thanh", "thanh", "thanh");
+        dbContext.Users.Add(user);
+        var poi = new Poi("home", "59 ntt", TestUser.DefaultUser.Id);
+        dbContext.Pois.Add(poi);
+        await dbContext.SaveChangesAsync();
+
+        var updateDto = new PoiUpdateDto
+        (
+            poi.Id,
+            "aaaaaaaa",
+            "City Garden"
+        );
+
+
+        var response = await client.RequestAsJsonAsyncWithToken(HttpMethod.Put, $"api/poi/{poi.Id}", token, updateDto);
+
+        var responseString = await response.Content.ReadAsStringAsync();
+
+        var errors = JsonSerializer.Deserialize<ProblemDetails>(responseString, new JsonSerializerOptions()
+        {
+            PropertyNameCaseInsensitive = true,
+        });
+
+        if (errors is not null)
+        {
+            var nameErrorMessage = TestHelper.GetErrorMessageOfAProperty(errors.Errors, nameof(PoiUpdateDto.Name), 0);
+
+            Assert.NotNull(nameErrorMessage);
+            Assert.Contains($"'{nameof(PoiUpdateDto.Name)}' must not be empty.".ToLower(), nameErrorMessage?.ToLower());
+        }
     }
 
     [Fact]
@@ -163,7 +207,7 @@ public class PoiControllerTest
         using var scope = app.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
         var token = await TestHelper.GetDefaultUserToken(client);
-        
+
         // create a poi to be searched later
         var poi1 = new Poi("home", "59 ntt", TestUser.DefaultUser.Id);
         var poi2 = new Poi("office", "Hue", TestUser.DefaultUser.Id);
@@ -172,7 +216,9 @@ public class PoiControllerTest
 
         await dbContext.SaveChangesAsync();
 
-        using var response = await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Get, $"api/poi/search?keyword={poi1.Address}", token);
+        using var response =
+            await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Get, $"api/poi/search?keyword={poi1.Address}",
+                token);
 
         response.EnsureSuccessStatusCode();
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
