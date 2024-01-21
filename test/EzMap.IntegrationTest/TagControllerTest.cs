@@ -5,6 +5,7 @@ using EzMap.Domain.Dtos;
 using EzMap.Domain.Models;
 using EzMap.Domain.Repositories;
 using EzMap.IntegrationTest.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
@@ -38,6 +39,45 @@ public class TagControllerTest
     }
 
     [Fact]
+    public async Task CreateTag_GreaterThan50CharNameProvided_ErrorMessageShow()
+    {
+        var app = new TestWebAppFactory<Program>();
+        var client = app.CreateClient();
+        using var scope = app.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
+
+        var token = await TestHelper.GetDefaultUserToken(client);
+
+        var user = new User("thanh", "thanh", "thanh", "thanh");
+        dbContext.Users.Add(user);
+
+        var tag = new Tag("home", "59 ntt", TestUser.DefaultUser.Id);
+        dbContext.Tags.Add(tag);
+
+        await dbContext.SaveChangesAsync();
+
+        var updateDto = new TagUpdateDto
+        (
+            tag.Id,
+            "citygarden",
+            "9VBJRFiYcF9gFeTZGSksaTMavgWTPG4Ep2pFYHqzy5i5hNDpkaa"
+        );
+
+        var response = await client.RequestAsJsonAsyncWithToken(HttpMethod.Put, $"api/tag/{tag.Id}", token, updateDto);
+
+        var responseString = await response.Content.ReadAsStringAsync();
+
+        var errorMessage = JsonSerializer.Deserialize<ProblemDetails>(responseString, new JsonSerializerOptions()
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
+        var descriptionError = errorMessage.Errors[nameof(TagCreateDto.Name)][0];
+
+        Assert.Contains($"'{nameof(TagCreateDto.Name)}'".ToLower(), descriptionError.ToLower());
+    }
+
+    [Fact]
     public async Task UpdateTag_CorrectDataProvided_TagShouldBeUpdated()
     {
         var app = new TestWebAppFactory<Program>();
@@ -60,7 +100,6 @@ public class TagControllerTest
             tag.Id,
             "THANH NUMBER FAV PLACE",
             "citygarden"
-            
         );
 
         var response = await client.RequestAsJsonAsyncWithToken(HttpMethod.Put, $"api/tag/{tag.Id}", token, updateDto);
@@ -71,6 +110,49 @@ public class TagControllerTest
             t.Name == updateDto.Name && t.Description == updateDto.Description);
 
         Assert.NotNull(dbTag);
+    }
+
+    [Fact]
+    public async Task UpdateTag_EmptyTagIdProvided_ErrorMessageShow()
+    {
+        var app = new TestWebAppFactory<Program>();
+        var client = app.CreateClient();
+        using var scope = app.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
+
+        var token = await TestHelper.GetDefaultUserToken(client);
+
+        var user = new User("thanh", "thanh", "thanh", "thanh");
+        dbContext.Users.Add(user);
+
+        var tag = new Tag("home", "59 ntt", TestUser.DefaultUser.Id);
+        dbContext.Tags.Add(tag);
+
+        await dbContext.SaveChangesAsync();
+
+        var updateDto = new TagUpdateDto
+        (
+            Guid.Empty, 
+            "THANH NUMBER FAV PLACE",
+            "citygarden"
+        );
+
+        var response = await client.RequestAsJsonAsyncWithToken(HttpMethod.Put, $"api/tag/{tag.Id}", token, updateDto);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        
+        var responseString = await response.Content.ReadAsStringAsync();
+
+        var errors = JsonSerializer.Deserialize<ProblemDetails>(responseString, new JsonSerializerOptions()
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
+        var comparingProperty = nameof(TagUpdateDto.Id);
+
+        var idErrorMessage = errors.Errors[comparingProperty][0];
+
+        Assert.Contains($"{comparingProperty}".ToLower(), idErrorMessage.ToLower());
     }
 
     [Fact]

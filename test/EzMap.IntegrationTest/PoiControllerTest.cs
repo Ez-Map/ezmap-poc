@@ -1,14 +1,10 @@
 ﻿using System.Net;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 using EzMap.Domain;
 using EzMap.Domain.Dtos;
 using EzMap.Domain.Models;
 using EzMap.IntegrationTest.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities.Resources;
 
 namespace EzMap.IntegrationTest;
 
@@ -21,10 +17,7 @@ public class PoiControllerTest
         var client = app.CreateClient();
         using var scope = app.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
-
-
         var token = await TestHelper.GetDefaultUserToken(client);
-
 
         var poi = new PoiCreateDto
         (
@@ -32,9 +25,7 @@ public class PoiControllerTest
             "citygarden"
         );
 
-
         var response = await client.RequestAsJsonAsyncWithToken(HttpMethod.Post, "api/poi/", token, poi);
-
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var dbPoi = dbContext.Pois.FirstOrDefault(p => p.Name == poi.Name && p.Address == poi.Address);
@@ -43,7 +34,36 @@ public class PoiControllerTest
     }
 
     [Fact]
-    public async Task UpdatePoi_IncorrectDataProvided_CorrectMessageShouldBeReturned()
+    public async Task CreatePoi_GreaterThan50CharNameProvided_ErrorMessageShow()
+    {
+        var app = new TestWebAppFactory<Program>();
+        var client = app.CreateClient();
+        using var scope = app.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
+        var token = await TestHelper.GetDefaultUserToken(client);
+
+        var poi = new PoiCreateDto
+        (
+            "9VBJRFiYcF9gFeTZGSksaTMavgWTPG4Ep2pFYHqzy5i5hNDpkvaaa",
+            "citygarden"
+        );
+
+        var response = await client.RequestAsJsonAsyncWithToken(HttpMethod.Post, "api/poi/", token, poi);
+
+        var responseString = await response.Content.ReadAsStringAsync();
+
+        var errorMessage = JsonSerializer.Deserialize<ProblemDetails>(responseString, new JsonSerializerOptions()
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
+        var descriptionError = errorMessage.Errors[nameof(PoiCreateDto.Name)][0];
+
+        Assert.Contains($"'{nameof(PoiCreateDto.Name)}'".ToLower(), descriptionError.ToLower());
+    }
+
+    [Fact]
+    public async Task UpdatePoi_EmptyNameProvided_ErrorMessageShow()
     {
         var app = new TestWebAppFactory<Program>();
         var client = app.CreateClient();
@@ -61,7 +81,7 @@ public class PoiControllerTest
         var updateDto = new PoiUpdateDto
         (
             poi.Id,
-            "aaaaaaaa",
+            "",
             "City Garden"
         );
 
@@ -75,13 +95,8 @@ public class PoiControllerTest
             PropertyNameCaseInsensitive = true,
         });
 
-        if (errors is not null)
-        {
-            var nameErrorMessage = TestHelper.GetErrorMessageOfAProperty(errors.Errors, nameof(PoiUpdateDto.Name), 0);
-
-            Assert.NotNull(nameErrorMessage);
-            Assert.Contains($"'{nameof(PoiUpdateDto.Name)}' must not be empty.".ToLower(), nameErrorMessage?.ToLower());
-        }
+        var nameErrorMessage = errors?.Errors[nameof(PoiUpdateDto.Name)][0];
+        Assert.Contains($"'{nameof(PoiUpdateDto.Name)}' must not be empty.".ToLower(), nameErrorMessage?.ToLower());
     }
 
     [Fact]

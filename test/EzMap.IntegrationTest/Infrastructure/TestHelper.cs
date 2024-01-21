@@ -16,9 +16,4 @@ static class TestHelper
         var token = await tokenResponse.Content.ReadAsStringAsync();
         return token;
     }
-
-    public static string GetErrorMessageOfAProperty(Dictionary<string, string[]> errorDict, string propertyName, int index)
-    {
-        return errorDict[propertyName][index];
-    }
 }
