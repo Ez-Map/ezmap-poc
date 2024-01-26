@@ -39,7 +39,6 @@ public class PoiControllerTest
         var app = new TestWebAppFactory<Program>();
         var client = app.CreateClient();
         using var scope = app.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
         var token = await TestHelper.GetDefaultUserToken(client);
 
         var poi = new PoiCreateDto
@@ -57,13 +56,15 @@ public class PoiControllerTest
             PropertyNameCaseInsensitive = true
         });
 
-        var descriptionError = errorMessage.Errors[nameof(PoiCreateDto.Name)][0];
+        var returnedErrorMessage = errorMessage.Errors[nameof(PoiCreateDto.Name)][0];
 
-        Assert.Contains($"'{nameof(PoiCreateDto.Name)}'".ToLower(), descriptionError.ToLower());
+        var expectedErrorMessage = $"The length of '{nameof(PoiCreateDto.Name)}' must be 50 characters or fewer";
+
+        Assert.True(returnedErrorMessage.Contains(expectedErrorMessage, StringComparison.CurrentCultureIgnoreCase));
     }
 
     [Fact]
-    public async Task UpdatePoi_EmptyNameProvided_ErrorMessageShow()
+    public async Task UpdatePoi_IncorrectDtoProvided_CorrespondingMessageShouldBeShowed()
     {
         var app = new TestWebAppFactory<Program>();
         var client = app.CreateClient();
@@ -80,11 +81,10 @@ public class PoiControllerTest
 
         var updateDto = new PoiUpdateDto
         (
-            poi.Id,
+            Guid.Empty,
             "",
-            "City Garden"
+            ""
         );
-
 
         var response = await client.RequestAsJsonAsyncWithToken(HttpMethod.Put, $"api/poi/{poi.Id}", token, updateDto);
 
@@ -95,8 +95,26 @@ public class PoiControllerTest
             PropertyNameCaseInsensitive = true,
         });
 
-        var nameErrorMessage = errors?.Errors[nameof(PoiUpdateDto.Name)][0];
-        Assert.Contains($"'{nameof(PoiUpdateDto.Name)}' must not be empty.".ToLower(), nameErrorMessage?.ToLower());
+        var returnedIdErrorMessage = errors?.Errors[nameof(PoiUpdateDto.Id)][0];
+
+        var returnedNameErrorMessage = errors?.Errors[nameof(PoiUpdateDto.Name)][0];
+
+        var returnedAddressErrorMessage = errors?.Errors[nameof(PoiUpdateDto.Address)][0];
+
+        var expectedNameErrorMessage = $"'{nameof(PoiUpdateDto.Name)}' must not be empty.";
+
+        var expectedIdErrorMessage = $"'{nameof(PoiUpdateDto.Id)}' must not be empty";
+
+        var expectedAddressMessage = $"'{nameof(PoiUpdateDto.Address)}' must not be empty";
+
+        Assert.True(returnedNameErrorMessage?.Contains(expectedNameErrorMessage,
+            StringComparison.CurrentCultureIgnoreCase));
+
+        Assert.True(returnedIdErrorMessage?.Contains(expectedIdErrorMessage,
+            StringComparison.CurrentCultureIgnoreCase));
+
+        Assert.True(returnedAddressErrorMessage?.Contains(expectedAddressMessage,
+            StringComparison.CurrentCultureIgnoreCase));
     }
 
     [Fact]

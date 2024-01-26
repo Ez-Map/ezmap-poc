@@ -1,13 +1,9 @@
 ﻿using System.Net;
 using System.Text.Json;
-using Azure;
 using EzMap.Domain.Dtos;
 using EzMap.Domain.Models;
-using EzMap.Domain.Repositories;
 using EzMap.IntegrationTest.Infrastructure;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace EzMap.IntegrationTest;
@@ -72,9 +68,11 @@ public class TagControllerTest
             PropertyNameCaseInsensitive = true
         });
 
-        var descriptionError = errorMessage.Errors[nameof(TagCreateDto.Name)][0];
+        var returnedErrorMessage = errorMessage.Errors[nameof(TagCreateDto.Name)][0];
 
-        Assert.Contains($"'{nameof(TagCreateDto.Name)}'".ToLower(), descriptionError.ToLower());
+        var expectedErrorMessage = $"the length of '{nameof(TagUpdateDto.Name)}' must be 50 characters or fewer";
+
+        Assert.True(returnedErrorMessage.Contains(expectedErrorMessage, StringComparison.CurrentCultureIgnoreCase));
     }
 
     [Fact]
@@ -113,7 +111,7 @@ public class TagControllerTest
     }
 
     [Fact]
-    public async Task UpdateTag_EmptyTagIdProvided_ErrorMessageShow()
+    public async Task UpdateTag_IncorrectUpdateTagDtoProvided_CorrespondingErrorMessageShow()
     {
         var app = new TestWebAppFactory<Program>();
         var client = app.CreateClient();
@@ -132,15 +130,15 @@ public class TagControllerTest
 
         var updateDto = new TagUpdateDto
         (
-            Guid.Empty, 
-            "THANH NUMBER FAV PLACE",
-            "citygarden"
+            Guid.Empty,
+            "",
+            ""
         );
 
         var response = await client.RequestAsJsonAsyncWithToken(HttpMethod.Put, $"api/tag/{tag.Id}", token, updateDto);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        
+
         var responseString = await response.Content.ReadAsStringAsync();
 
         var errors = JsonSerializer.Deserialize<ProblemDetails>(responseString, new JsonSerializerOptions()
@@ -148,11 +146,29 @@ public class TagControllerTest
             PropertyNameCaseInsensitive = true
         });
 
-        var comparingProperty = nameof(TagUpdateDto.Id);
+        var returnedIdErrorMessage = errors?.Errors[nameof(TagUpdateDto.Id)][0];
 
-        var idErrorMessage = errors.Errors[comparingProperty][0];
+        var returnedNameErrorMessage = errors?.Errors[nameof(TagUpdateDto.Name)][0];
 
-        Assert.Contains($"{comparingProperty}".ToLower(), idErrorMessage.ToLower());
+        var returnedDescriptionErrorMessage = errors?.Errors[nameof(TagUpdateDto.Description)][0];
+
+        var expectedNameErrorMessage = $"'{nameof(TagUpdateDto.Name)}' must not be empty.";
+
+        var expectedIdErrorMessage = $"'{nameof(TagUpdateDto.Id)}' must not be empty";
+
+        var expectedDescriptionErrorMessage = $"'{nameof(TagUpdateDto.Description)}' must not be empty";
+
+        Assert.True(returnedNameErrorMessage?.Contains(expectedNameErrorMessage,
+            StringComparison.CurrentCultureIgnoreCase));
+
+        Assert.True(returnedIdErrorMessage?.Contains(expectedIdErrorMessage,
+            StringComparison.CurrentCultureIgnoreCase));
+
+        Assert.True(returnedDescriptionErrorMessage?.Contains(expectedDescriptionErrorMessage,
+            StringComparison.CurrentCultureIgnoreCase));
+
+        Assert.True(returnedDescriptionErrorMessage?.Contains(expectedDescriptionErrorMessage,
+            StringComparison.CurrentCultureIgnoreCase));
     }
 
     [Fact]
@@ -229,7 +245,6 @@ public class TagControllerTest
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             });
-
 
         Assert.Equal(tag.Name, responsePoi[0].Name);
         Assert.Equal(tag.Description, responsePoi[0].Description);

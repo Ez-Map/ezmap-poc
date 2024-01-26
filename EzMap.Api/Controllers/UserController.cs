@@ -56,6 +56,6 @@ public class UserController : ControllerBase
             return Ok(tokenHandler.WriteToken(token));
         }
 
-        return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+        return new StatusCodeResult(StatusCodes.Status401Unauthorized);
     }
 }

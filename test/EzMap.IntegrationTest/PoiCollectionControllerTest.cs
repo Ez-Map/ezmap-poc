@@ -4,7 +4,6 @@ using EzMap.Domain.Constants;
 using EzMap.Domain.Dtos;
 using EzMap.Domain.Models;
 using EzMap.IntegrationTest.Infrastructure;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace EzMap.IntegrationTest;
@@ -17,8 +16,6 @@ public class PoiCollectionControllerTest
         var app = new TestWebAppFactory<Program>();
         var client = app.CreateClient();
         using var scope = app.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
-
 
         var token = await TestHelper.GetDefaultUserToken(client);
 
@@ -37,11 +34,15 @@ public class PoiCollectionControllerTest
 
         var comparingProperty = nameof(PoiCollectionCreateDto.Name).ToLower();
 
-        var nameShowingMessage = JsonSerializer.Deserialize<ProblemDetails>(responseString, new JsonSerializerOptions()
+        var errorObject = JsonSerializer.Deserialize<ProblemDetails>(responseString, new JsonSerializerOptions()
         {
             PropertyNameCaseInsensitive = true
         });
-        Assert.Contains(comparingProperty, nameShowingMessage.Errors[nameof(PoiCollectionCreateDto.Name)][0].ToLower());
+
+        var returnedErrorMessage = errorObject.Errors[nameof(PoiCollectionCreateDto.Name)][0];
+
+        var expectedErrorMessage = $"The length of '{comparingProperty}' must be 100 characters or fewer";
+        Assert.True(returnedErrorMessage.Contains(expectedErrorMessage, StringComparison.CurrentCultureIgnoreCase));
     }
 
     [Fact]
@@ -111,7 +112,7 @@ public class PoiCollectionControllerTest
     }
 
     [Fact]
-    public async Task UpdatePoiCollectio_EmptyPoiColIdProvided_EmptyIdErrorMessageShouldBeShowed()
+    public async Task UpdatePoiCollection_IncorrectUpdateDtoProvided_CorrespondingErrorShouldBeShown()
     {
         var app = new TestWebAppFactory<Program>();
         var client = app.CreateClient();
@@ -130,7 +131,7 @@ public class PoiCollectionControllerTest
 
         var updateDto = new PoiCollectionUpdateDto(
             Guid.Empty,
-            "THANH NUMBER FAV PLACE",
+            "htxoeimuxzxhjqqjnqzcedemeuvigkydcejfppiovtvujrelyghtxoeimuxzxhjqqjnqzcedemeuvigkydcejfppiovtvujrelygff",
             "citygarden",
             PoiEnum.ViewType.Map
         );
@@ -141,8 +142,6 @@ public class PoiCollectionControllerTest
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
-        var comparingProperty = nameof(PoiCollectionUpdateDto.Id);
-
         var responseString = await response.Content.ReadAsStringAsync();
 
         var errorMessages = JsonSerializer.Deserialize<ProblemDetails>(responseString, new JsonSerializerOptions()
@@ -150,9 +149,21 @@ public class PoiCollectionControllerTest
             PropertyNameCaseInsensitive = true,
         });
 
-        var idErrorMessage = errorMessages?.Errors[comparingProperty][0];
+        var returnedIdErrorMessage = errorMessages?.Errors[nameof(PoiCollectionUpdateDto.Id)][0];
 
-        Assert.Contains($"{comparingProperty}".ToLower(), idErrorMessage?.ToLower());
+        var returnedNameErrorMessage = errorMessages?.Errors[nameof(PoiCollectionUpdateDto.Name)][0];
+
+        var expectedIdErrorMessage = $"'{nameof(PoiCollectionUpdateDto.Id)}' must not be empty.";
+
+        var expectNameErrorMessage =
+            $"'{nameof(PoiCollectionUpdateDto.Name)}' must be 100 characters or fewer.";
+
+        Assert.True(returnedIdErrorMessage != null &&
+                    returnedIdErrorMessage.Equals(expectedIdErrorMessage, StringComparison.CurrentCultureIgnoreCase));
+
+        Assert.True(returnedNameErrorMessage != null &&
+                    returnedNameErrorMessage.Contains(expectNameErrorMessage,
+                        StringComparison.CurrentCultureIgnoreCase));
     }
 
     [Fact]
