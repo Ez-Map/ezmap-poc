@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace EzMap.IntegrationTest;
 
-public class AnthenticationControllerTest
+public class AuthenticationControllerTest
 {
     [Fact]
     public async Task SignIn_CorrectUsernamePassword_TokenShouldBeGranted()
@@ -63,7 +63,7 @@ public class AnthenticationControllerTest
         using var scope = app.Services.CreateScope();
         var user = new UserCreationDto()
         {
-            UserName = "bytetum", DisplayName = "hoangml", Email = "notdeciced@gmail.com", Password = "ThHo!0322",
+            UserName = "bytetum", DisplayName = "hoangml", Email = "notdeciced@gmail.com", Password = "ThHo|0322",
         };
 
         // act
@@ -81,33 +81,39 @@ public class AnthenticationControllerTest
         // successful message returned
         Assert.True(BCrypt.Net.BCrypt.Verify(user.Password, dbUser.Password));
     }
-
+    
     [Fact]
-    public async Task SignUp_InvalidPasswordProvided_BadRequestAndErrorMessageReturn()
+    public async Task SignUp_InvalidPasswordViolatedThreeComplixityCheck_BadRequestAndThreeErrorMessagesReturn()
     {
         var app = new TestWebAppFactory<Program>();
         var client = app.CreateClient();
         using var scope = app.Services.CreateScope();
         var userSignUpDto = new UserCreationDto()
         {
-            UserName = "bytetum", DisplayName = "hoangml", Email = "notdeciced@gmail.com", Password = "Aaaaaaa!",
+            UserName = "bytetum", DisplayName = "hoangml", Email = "notdeciced@gmail.com", Password = "aaaaaa",
         };
-
+        
+        var expectedErrorMessages = new List<string>
+        {
+            "Password must be between 8 and 16 characters long.",
+            "Password must contain at least one uppercase letter.",
+            "Password must contain at least one digit.",
+            "Password must contain at least one special character."
+        };
+        
         var response = await client.PostAsJsonAsync("api/user/SignUp", userSignUpDto);
 
         var responseString = await response.Content.ReadAsStringAsync();
 
-        var errorObject = JsonSerializer.Deserialize<ProblemDetails>(responseString, new JsonSerializerOptions()
+        var errorObject = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(responseString, new JsonSerializerOptions()
         {
             PropertyNameCaseInsensitive = true
         });
 
         var comparingProperty = nameof(UserSignInDto.Password);
+        
+        Assert.True(errorObject?[comparingProperty].Count == 4);
 
-        var returnedErrorMessage = errorObject.Errors[comparingProperty][0];
-
-        var expectedErrorMessage = "Your password must contain at least one number.";
-
-        Assert.True(expectedErrorMessage.Contains(returnedErrorMessage, StringComparison.CurrentCultureIgnoreCase));
+        Assert.Equal(expectedErrorMessages, errorObject["Password"]);
     }
 }

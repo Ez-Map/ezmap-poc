@@ -1,8 +1,10 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using EzMap.Api.Services;
 using EzMap.Domain.Dtos;
 using EzMap.Domain.Repositories;
+using EzMap.Domain.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -23,8 +25,19 @@ public class UserController : ControllerBase
 
     [HttpPost("SignUp")]
     public async Task<IActionResult> SignUp([FromServices] IUnitOfWork uow,
-        [FromBody] UserCreationDto dto)
+        [FromBody] UserCreationDto dto, [FromServices] IIdentityService identityService)
     {
+        var passwordErrors = await identityService.VerifyPassword(dto.Password);
+
+        if (passwordErrors.Any())
+        {
+            foreach (var error in passwordErrors)
+            {
+                ModelState.AddModelError(nameof(dto.Password), error);
+            }
+            return BadRequest(ModelState);
+        }
+        
         if (await uow.UserRepository.CreateUser(dto)) return Ok("Your account is created!");
 
         return new StatusCodeResult(StatusCodes.Status500InternalServerError);

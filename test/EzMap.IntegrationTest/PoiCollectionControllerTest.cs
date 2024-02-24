@@ -32,7 +32,7 @@ public class PoiCollectionControllerTest
 
         var responseString = await response.Content.ReadAsStreamAsync();
 
-        var comparingProperty = nameof(PoiCollectionCreateDto.Name).ToLower();
+        var comparingProperty = nameof(PoiCollectionCreateDto.Name);
 
         var errorObject = JsonSerializer.Deserialize<ProblemDetails>(responseString, new JsonSerializerOptions()
         {
@@ -53,9 +53,7 @@ public class PoiCollectionControllerTest
         using var scope = app.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
 
-
         var token = await TestHelper.GetDefaultUserToken(client);
-
 
         var poiCol = new PoiCollectionCreateDto
         (
