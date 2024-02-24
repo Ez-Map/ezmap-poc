@@ -5,5 +5,5 @@ namespace EzMap.IntegrationTest.Infrastructure;
 
 public class TestUser
 {
-    public static readonly User DefaultUser = new User("string", "string", "string", BCrypt.Net.BCrypt.HashPassword("string"));
+    public static readonly User DefaultUser = new User("string", "stringstring", "string", BCrypt.Net.BCrypt.HashPassword("stringstring"));
 }

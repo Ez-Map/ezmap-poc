@@ -1,8 +1,10 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using EzMap.Api.Services;
 using EzMap.Domain.Dtos;
 using EzMap.Domain.Repositories;
+using EzMap.Domain.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -23,17 +25,19 @@ public class UserController : ControllerBase
 
     [HttpPost("SignUp")]
     public async Task<IActionResult> SignUp([FromServices] IUnitOfWork uow,
-        [FromBody] UserCreationDto dto)
+        [FromBody] UserCreationDto dto, [FromServices] IIdentityService identityService)
     {
-        if (string.IsNullOrWhiteSpace(dto.UserName)
-            || string.IsNullOrWhiteSpace(dto.Password)
-            || string.IsNullOrWhiteSpace(dto.Email)
-            || string.IsNullOrWhiteSpace(dto.DisplayName)
-           )
-        {
-            return BadRequest("Kindly fill all the fields!");
-        }
+        var passwordErrors = await identityService.VerifyPassword(dto.Password);
 
+        if (passwordErrors.Any())
+        {
+            foreach (var error in passwordErrors)
+            {
+                ModelState.AddModelError(nameof(dto.Password), error);
+            }
+            return BadRequest(ModelState);
+        }
+        
         if (await uow.UserRepository.CreateUser(dto)) return Ok("Your account is created!");
 
         return new StatusCodeResult(StatusCodes.Status500InternalServerError);
@@ -44,12 +48,6 @@ public class UserController : ControllerBase
     public async Task<IActionResult> SignIn([FromServices] IConfiguration configuration,
         [FromServices] IUnitOfWork uow, [FromBody] UserSignInDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Username)
-            || string.IsNullOrWhiteSpace(dto.Password))
-        {
-            return BadRequest("Either Username or Password is missing");
-        }
-
         Guid? userId = await uow.UserRepository.SignIn(dto);
 
         if (userId != null)
@@ -71,6 +69,6 @@ public class UserController : ControllerBase
             return Ok(tokenHandler.WriteToken(token));
         }
 
-        return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+        return new StatusCodeResult(StatusCodes.Status401Unauthorized);
     }
 }

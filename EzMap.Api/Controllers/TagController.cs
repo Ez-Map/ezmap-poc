@@ -16,12 +16,6 @@ public class TagController : ControllerBase
     public async Task<IActionResult> Create([FromBody] TagCreateDto dto, [FromServices] IUnitOfWork uow,
         [FromServices] IIdentityService identityService)
     {
-        if (string.IsNullOrEmpty(dto.Name)
-            && string.IsNullOrEmpty(dto.Description))
-        {
-            return BadRequest("Kindly fill Name, Description fields!");
-        }
-
         uow.TagRepository.AddTag(dto.WithUserId(identityService.GetUserId()));
         return await uow.SaveAsync() > 0
             ? Ok("Your tag is created successfully!")
@@ -33,12 +27,6 @@ public class TagController : ControllerBase
     public async Task<IActionResult> UpdateTag([FromBody] TagUpdateDto dto, [FromServices] IUnitOfWork uow,
         [FromServices] IIdentityService identityService)
     {
-        if (string.IsNullOrEmpty(dto.Name)
-            && string.IsNullOrEmpty(dto.Description))
-        {
-            return BadRequest("Kindly fill Name, Description fields!");
-        }
-
         var dbTag = await uow.TagRepository.GetTagById(identityService.GetUserId(), dto.Id);
 
         if (dbTag is not null)

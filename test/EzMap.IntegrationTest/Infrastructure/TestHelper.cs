@@ -9,8 +9,8 @@ static class TestHelper
     {
         var userSignInDto = new UserSignInDto()
         {
-            Username = "string",
-            Password = "string"
+            Username = "stringstring",
+            Password = "stringstring"
         };
         var tokenResponse = await client.PostAsJsonAsync("api/user/signin", userSignInDto);
         var token = await tokenResponse.Content.ReadAsStringAsync();

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -19,10 +20,10 @@ public class TestWebAppFactory<TProgram> : WebApplicationFactory<TProgram> where
         {
             var db = scope.ServiceProvider.GetRequiredService<EzMapContext>();
             db.Database.EnsureCreated();
-            db.Users.Add(TestUser.DefaultUser); 
+            db.Users.Add(TestUser.DefaultUser);
             db.SaveChanges();
         }
-        
+
         host.Start();
         return host;
     }
@@ -57,9 +58,9 @@ public class TestWebAppFactory<TProgram> : WebApplicationFactory<TProgram> where
                 var connection = container.GetRequiredService<DbConnection>();
                 options.UseSqlite(connection);
             });
-            
-            
         });
+
+        builder.ConfigureAppConfiguration((ctx, builder) => { builder.AddJsonFile("appsettings.json"); });
 
         builder.UseEnvironment("Development");
     }

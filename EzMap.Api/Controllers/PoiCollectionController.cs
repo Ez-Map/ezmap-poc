@@ -18,12 +18,6 @@ public class PoiCollectionController : ControllerBase
         [FromServices] IUnitOfWork uow,
         [FromServices] IIdentityService identityService)
     {
-        if (string.IsNullOrEmpty(dto.Name)
-            && string.IsNullOrEmpty(dto.Description))
-        {
-            return BadRequest("Kindly fill Name, Address fields!");
-        }
-
         uow.PoiCollectionRepository.AddPoiCollection(dto.WithUserId(identityService.GetUserId()));
 
         return await uow.SaveAsync() > 0
@@ -60,12 +54,6 @@ public class PoiCollectionController : ControllerBase
     public async Task<IActionResult> Update([FromBody] PoiCollectionUpdateDto dto, [FromServices] IUnitOfWork uow,
         [FromServices] IIdentityService identityService)
     {
-        if (string.IsNullOrEmpty(dto.Name)
-            && string.IsNullOrEmpty(dto.Description))
-        {
-            return BadRequest("Kindly fill Name, Description fields!");
-        }
-
         var dbPoiCol = await uow.PoiCollectionRepository.GetPoiCollectionById(identityService.GetUserId(), dto.Id);
 
         if (dbPoiCol is not null) uow.PoiCollectionRepository.UpdatePoiCollectionAsync(dbPoiCol, dto);

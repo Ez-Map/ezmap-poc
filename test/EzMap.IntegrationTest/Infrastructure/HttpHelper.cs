@@ -5,7 +5,8 @@ namespace EzMap.IntegrationTest.Infrastructure;
 
 public static class HttpHelper
 {
-    public static Task<HttpResponseMessage> RequestAsJsonAsyncWithToken<T>(this HttpClient client, HttpMethod method,
+    public static Task<HttpResponseMessage> 
+        RequestAsJsonAsyncWithToken<T>(this HttpClient client, HttpMethod method,
         string uri,
         string token, T? dto = default)
     {
