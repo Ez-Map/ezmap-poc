@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace EzMap.Domain.Repositories;
 
@@ -18,14 +19,22 @@ public interface IUnitOfWork
     IDbContextTransaction BeginTransaction();
 }
 
-public class UnitOfWork : IUnitOfWork
+public class UnitOfWork : IDisposable ,IUnitOfWork
 {
+    private ILoggerFactory _loggerFactory;
     protected readonly EzMapContext _context;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private PoiRepository? _poiRepository;
     private UserRepository? _userRepository;
     private TagRepository? _tagRepository;
     private PoiCollectionRepository? _poiCollectionRepository;
+
+    public UnitOfWork(ILoggerFactory loggerFactory, EzMapContext context, IHttpContextAccessor httpContextAccessor)
+    {
+        _loggerFactory = loggerFactory;
+        _context = context;
+        _httpContextAccessor = httpContextAccessor;
+    }
 
     public IPoiCollectionRepository PoiCollectionRepository
     {
@@ -44,15 +53,8 @@ public class UnitOfWork : IUnitOfWork
 
     public IUserRepository UserRepository
     {
-        get => _userRepository ?? new UserRepository(_context);
+        get => _userRepository ?? new UserRepository(_context, _loggerFactory.CreateLogger<UserRepository>());
     }
-
-    public UnitOfWork(EzMapContext context, IHttpContextAccessor httpContextAccessor)
-    {
-        _context = context;
-        _httpContextAccessor = httpContextAccessor;
-    }
-
 
     public async Task<int> SaveAsync()
     {
@@ -97,5 +99,11 @@ public class UnitOfWork : IUnitOfWork
                     break;
             }
         }
+    }
+
+    public void Dispose()
+    {
+        _loggerFactory.Dispose();
+        _context.Dispose();
     }
 }
