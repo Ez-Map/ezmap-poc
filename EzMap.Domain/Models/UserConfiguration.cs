@@ -16,7 +16,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.CreatedDate);
 
         builder.HasMany(u => u.SelectedPois)
-            .WithOne(p => p.User);
+            .WithOne(p => p.User).OnDelete(DeleteBehavior.NoAction);
 
         builder.HasMany(x => x.SelectedPoiCollections)
             .WithOne(x => x.User);

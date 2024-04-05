@@ -3,7 +3,6 @@ using EzMap.Domain.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace EzMap.Domain.Repositories;
@@ -38,17 +37,17 @@ public class UnitOfWork : IDisposable ,IUnitOfWork
 
     public IPoiCollectionRepository PoiCollectionRepository
     {
-        get => _poiCollectionRepository ?? new PoiCollectionRepository(_context);
+        get => _poiCollectionRepository ?? new PoiCollectionRepository(_context, _loggerFactory.CreateLogger<PoiCollection>());
     }
 
     public ITagRepository TagRepository
     {
-        get => _tagRepository ?? new TagRepository(_context);
+        get => _tagRepository ?? new TagRepository(_context, _loggerFactory.CreateLogger<TagRepository>());
     }
 
     public IPoiRepository PoiRepository
     {
-        get => _poiRepository ?? new PoiRepository(_context);
+        get => _poiRepository ?? new PoiRepository(_context, _loggerFactory.CreateLogger<PoiRepository>());
     }
 
     public IUserRepository UserRepository
@@ -103,7 +102,6 @@ public class UnitOfWork : IDisposable ,IUnitOfWork
 
     public void Dispose()
     {
-        _loggerFactory.Dispose();
         _context.Dispose();
     }
 }

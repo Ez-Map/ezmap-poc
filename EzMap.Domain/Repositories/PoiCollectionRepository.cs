@@ -2,6 +2,7 @@
 using EzMap.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
+using Microsoft.Extensions.Logging;
 
 namespace EzMap.Domain.Repositories;
 
@@ -23,16 +24,20 @@ public interface IPoiCollectionRepository
 public class PoiCollectionRepository : IPoiCollectionRepository
 {
     private readonly EzMapContext _dbContext;
+    private readonly ILogger<PoiCollection> _logger;
 
-    public PoiCollectionRepository(EzMapContext dbContext)
+    public PoiCollectionRepository(EzMapContext dbContext, ILogger<PoiCollection> logger)
     {
         _dbContext = dbContext;
+        _logger = logger;
     }
 
     public async Task<PoiCollection?> GetPoiCollectionById(Guid? userId, Guid id, CancellationToken token = default)
     {
         var poi = await _dbContext.PoiCollections
             .FirstOrDefaultAsync(x => x.Id == id && x.UserId == userId, cancellationToken: token);
+        
+        _logger.LogInformation($"Retrieved Poi: {id} of and User Id: {userId} ");
 
         return poi;
     }
@@ -42,6 +47,8 @@ public class PoiCollectionRepository : IPoiCollectionRepository
         if (userId == null) return null;
         List<PoiCollection> poiCollections = await _dbContext.PoiCollections
             .Where(x => x.UserId == userId).ToListAsync(cancellationToken: token);
+        
+        _logger.LogInformation($"Retrieved a list: {poiCollections.Count} Poi Collection of User ID: {userId}");
 
         return poiCollections;
     }
@@ -50,7 +57,9 @@ public class PoiCollectionRepository : IPoiCollectionRepository
     {
         var poiCollection = new PoiCollection(dto.Name, dto.Description, dto.UserId);
 
-        _dbContext.PoiCollections.Add(poiCollection);
+        _dbContext.PoiCollections?.Add(poiCollection);
+        
+        _logger.LogInformation($"Added a new Poi Collection: {poiCollection.Name} ({poiCollection.Id})");
     }
 
     public void UpdatePoiCollectionAsync(PoiCollection dbPoiCollection, PoiCollectionUpdateDto dto)
@@ -62,6 +71,8 @@ public class PoiCollectionRepository : IPoiCollectionRepository
         dbPoiCollection.Tags.AddRange(dto.Tags);
         dbPoiCollection.Pois.Clear();
         dbPoiCollection.Pois.AddRange(dto.Pois);
+        
+        _logger.LogInformation($"Updated existing Poi Collection: {dbPoiCollection.Id}");
     }
 
     public async Task DeletePoiCollectionAsync(Guid id, CancellationToken token = default)
@@ -70,6 +81,7 @@ public class PoiCollectionRepository : IPoiCollectionRepository
         if (poiCollection is not null)
         {
             poiCollection.DeletedDate = DateTime.Now;
+            _logger.LogInformation($"Deleted PoiCollection: {poiCollection.Name} ({poiCollection.Id})");
         }
     }
 
@@ -89,6 +101,8 @@ public class PoiCollectionRepository : IPoiCollectionRepository
                      || x.Tags.Any(x => x.Name.ToLower().Contains(keyword.ToLower()))
             );
         }
+        
+        _logger.LogInformation($"{poiCollection.Count()} matched poi(s) searched with Keyword: {keyword} (UserId : {userId})");
 
         return await poiCollection.ToListAsync(cancellationToken: token);
     }

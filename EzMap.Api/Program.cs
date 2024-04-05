@@ -21,6 +21,8 @@ Log.Logger = new LoggerConfiguration()
     .WriteTo.Seq("http://localhost:5341")
     .CreateLogger();
 
+builder.Logging.AddSerilog();
+
 // Add services to the container.
 builder.Services.AddDbContext<EzMapContext>(
     options => { options.UseSqlServer(builder.Configuration.GetConnectionString("myDb1")); }
