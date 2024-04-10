@@ -13,19 +13,27 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using Serilog.Exceptions;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var configuration = new ConfigurationBuilder()
+    .AddJsonFile("appsettings.json")
+    .Build();
+
 Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console()
-    .WriteTo.Seq("http://localhost:5341")
+    .ReadFrom.Configuration(configuration)
+    .Enrich.FromLogContext()
+    .Enrich.WithExceptionDetails()
+   // .WriteTo.Seq("http://localhost:5341")
     .CreateLogger();
 
 builder.Logging.AddSerilog();
 
 // Add services to the container.
 builder.Services.AddDbContext<EzMapContext>(
-    options => { options.UseSqlServer(builder.Configuration.GetConnectionString("myDb1")); }
+    options => { options.UseSqlServer(builder.Configuration.GetConnectionString("myDb1"), sqlOptions => sqlOptions.EnableRetryOnFailure());  }
+
 );
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IIdentityService, IdentityService>();
@@ -86,6 +94,12 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 builder.Services.AddHttpContextAccessor();
+
+using (var scope = builder.Services.BuildServiceProvider().CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
+    dbContext.Database.Migrate();
+}
 
 var app = builder.Build();
 
