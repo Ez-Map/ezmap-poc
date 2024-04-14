@@ -25,15 +25,14 @@ Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(configuration)
     .Enrich.FromLogContext()
     .Enrich.WithExceptionDetails()
-   // .WriteTo.Seq("http://localhost:5341")
+    // .WriteTo.Seq("http://localhost:5341")
     .CreateLogger();
 
 builder.Logging.AddSerilog();
 
 // Add services to the container.
 builder.Services.AddDbContext<EzMapContext>(
-    options => { options.UseSqlServer(builder.Configuration.GetConnectionString("myDb1"), sqlOptions => sqlOptions.EnableRetryOnFailure());  }
-
+    options => { options.UseSqlServer(builder.Configuration.GetConnectionString("myDb1")); }
 );
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IIdentityService, IdentityService>();
