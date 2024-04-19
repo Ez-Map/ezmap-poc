@@ -94,11 +94,16 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddHttpContextAccessor();
 
-using (var scope = builder.Services.BuildServiceProvider().CreateScope())
+var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+
+if (environment != "TEST")
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
-    dbContext.Database.Migrate();
-}
+    using (var scope = builder.Services.BuildServiceProvider().CreateScope())
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
+        dbContext.Database.Migrate();
+    }
+} 
 
 var app = builder.Build();
 

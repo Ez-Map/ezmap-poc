@@ -30,6 +30,8 @@ public class TestWebAppFactory<TProgram> : WebApplicationFactory<TProgram> where
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "TEST");
+        
         builder.ConfigureServices(services =>
         {
             var dbContextDescriptor = services.SingleOrDefault(
