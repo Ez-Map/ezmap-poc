@@ -1,7 +1,5 @@
 using System.Text;
-using EzMap.Api.Controllers;
 using EzMap.Api.Services;
-using EzMap.Domain;
 using EzMap.Domain.Dtos;
 using EzMap.Domain.Models;
 using EzMap.Domain.Repositories;
@@ -12,14 +10,31 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Nest;
 using Serilog;
 using Serilog.Exceptions;
 
 var builder = WebApplication.CreateBuilder(args);
-
 var configuration = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json")
+    .AddEnvironmentVariables()
     .Build();
+//var elasticsearchUrl = "https://127.0.0.1:9200:5001"; // Replace with your Elasticsearch connection string
+var elasticsearchUrl = configuration["ELK:URl"]; // Replace with your Elasticsearch connection string
+// var settings = new ConnectionSettings(new Uri("http://localhost:5001/")) 
+//     .ServerCertificateValidationCallback((sender, certificate, chain, errors) => true)
+//     .BasicAuthentication("elastic", "p1vrgOeVbPfN=YOHhOD" +
+//                                     "a")
+//     .EnableApiVersioningHeader();
+
+var settings = new ConnectionSettings(new Uri("http://localhost:5001/")) 
+    .ServerCertificateValidationCallback((sender, certificate, chain, errors) => true)
+    .BasicAuthentication("elastic", "p1vrgOeVbPfN=YOHhOD" +
+                                    "a")
+    .EnableApiVersioningHeader();
+var client = new ElasticClient(settings);
+
+builder.Services.AddSingleton<IElasticClient>(client);
 
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(configuration)
@@ -36,6 +51,7 @@ builder.Services.AddDbContext<EzMapContext>(
 );
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IIdentityService, IdentityService>();
+builder.Services.AddSingleton(typeof(IElasticSearchService<>), typeof(ElasticSearchService<>));
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<PoiCreateDtoValidator>();
 
@@ -104,7 +120,6 @@ if (environment != "TEST")
         dbContext.Database.Migrate();
     }
 }
-
 
 var app = builder.Build();
 

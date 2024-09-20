@@ -1,4 +1,5 @@
 ﻿using System.Data.Common;
+using EzMap.Api.Services;
 using EzMap.Domain;
 using EzMap.Domain.Models;
 using Microsoft.AspNetCore.Hosting;
@@ -8,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Nest;
 
 namespace EzMap.IntegrationTest.Infrastructure;
 
