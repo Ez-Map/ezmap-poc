@@ -14,7 +14,7 @@ public interface IPoiCollectionRepository
 
     Task<List<PoiCollection>?> GetListPoiCollectionAsync(Guid? userId, CancellationToken token = default);
 
-    void AddPoiCollection(PoiCollectionCreateDto dto);
+    Guid AddPoiCollection(PoiCollectionCreateDto dto);
 
     Task DeletePoiCollectionAsync(Guid id, CancellationToken token = default);
 
@@ -53,13 +53,15 @@ public class PoiCollectionRepository : IPoiCollectionRepository
         return poiCollections;
     }
 
-    public void AddPoiCollection(PoiCollectionCreateDto dto)
+    public Guid AddPoiCollection(PoiCollectionCreateDto dto)
     {
         var poiCollection = new PoiCollection(dto.Name, dto.Description, dto.UserId);
 
         _dbContext.PoiCollections?.Add(poiCollection);
         
-        _logger.LogInformation($"Added a new Poi Collection: {poiCollection.Name} ({poiCollection.Id})");
+        _logger.LogInformation($"Prepared a new Poi Collection to add: {poiCollection.Name} ({poiCollection.Id})");
+
+        return poiCollection.Id;
     }
 
     public void UpdatePoiCollectionAsync(PoiCollection dbPoiCollection, PoiCollectionUpdateDto dto)

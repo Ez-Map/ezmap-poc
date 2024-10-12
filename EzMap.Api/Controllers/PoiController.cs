@@ -2,11 +2,13 @@
 using EzMap.Api.Services;
 using EzMap.Domain;
 using EzMap.Domain.Dtos;
+using EzMap.Domain.Indexes;
 using EzMap.Domain.Repositories;
 using EzMap.Domain.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Nest;
 
 namespace EzMap.Api.Controllers;
 
@@ -17,26 +19,55 @@ public class PoiController : ControllerBase
     [Authorize]
     [HttpPost("")]
     public async Task<IActionResult> Create([FromBody] PoiCreateDto dto, [FromServices] IUnitOfWork uow,
-        [FromServices] IIdentityService identityService)
+        [FromServices] IIdentityService identityService, [FromServices] IElasticSearchService elasticSearchService)
     {
-        uow.PoiRepository.AddPoi(dto.WithUserId(identityService.GetUserId()));
+        try
+        {
+            var poiId = uow.PoiRepository.AddPoi(dto.WithUserId(identityService.GetUserId()));
+            var dbResult = await uow.SaveAsync();
+            if (dbResult <= 0)
+            {
+                return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+            }
 
-        return await uow.SaveAsync() > 0
-            ? Ok("Your point of interest is created successfully!")
-            : new StatusCodeResult(StatusCodes.Status500InternalServerError);
+            var poiCreateIndex = new PoiCreateIndex(poiId ,dto.Name, dto.Address);
+            var esResult = await elasticSearchService.AddOrUpdate(poiCreateIndex);
+            if (!esResult)
+            {
+                return Ok(new
+                {
+                    Message = "Your point of interest is created successfully, but indexing encountered an issue.",
+                    name = dto.Name
+                });
+            }
+
+            return Ok(new
+            {
+                Message = "Your point of interest is created and indexed successfully!",
+                Name = dto.Name,
+                Id = poiId,
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "An error occurred while processing your request.");
+        }
     }
 
 
     [Authorize]
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update([FromBody] PoiUpdateDto dto, [FromServices] IUnitOfWork uow,
-        [FromServices] IIdentityService identityService)
+        [FromServices] IIdentityService identityService, [FromServices] IElasticSearchService elasticSearchService)
     {
         var dbPoi = await uow.PoiRepository.GetPoiById(identityService.GetUserId(), dto.Id);
 
         if (dbPoi is not null)
         {
             uow.PoiRepository.UpdatePoiAsync(dbPoi, dto.WithUserId(identityService.GetUserId()));
+            var poiUpdateIndex = new PoiUpdateIndex(dbPoi.Id, dbPoi.Name, dbPoi.Address);
+            await elasticSearchService.AddOrUpdate(poiUpdateIndex);
         }
 
         return await uow.SaveAsync() > 0
@@ -46,7 +77,7 @@ public class PoiController : ControllerBase
 
     [Authorize]
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id, [FromServices] IUnitOfWork uow)
+    public async Task<IActionResult> Delete(Guid id, [FromServices] IUnitOfWork uow, [FromServices] IElasticSearchService elasticSearchService)
     {
         if (string.IsNullOrEmpty(id.ToString()))
         {
@@ -54,7 +85,7 @@ public class PoiController : ControllerBase
         }
 
         await uow.PoiRepository.DeletePoiAsync(id);
-
+        await elasticSearchService.Remove(id.ToString());
         return await uow.SaveAsync() > 0
             ? Ok("Your point of interest is deleted successfully!")
             : new StatusCodeResult(StatusCodes.Status500InternalServerError);

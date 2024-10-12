@@ -15,21 +15,25 @@ using Serilog;
 using Serilog.Exceptions;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var environmentName = GetEnvironmentName();
+
 var configuration = new ConfigurationBuilder()
-    .AddJsonFile("appsettings.json")
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
+    .AddJsonFile($"appsettings.{environmentName}.json", optional: true, reloadOnChange: false)
     .AddEnvironmentVariables()
     .Build();
-//var elasticsearchUrl = "https://127.0.0.1:9200:5001"; // Replace with your Elasticsearch connection string
-var elasticsearchUrl = configuration["ELK:URl"]; // Replace with your Elasticsearch connection string
-// var settings = new ConnectionSettings(new Uri("http://localhost:5001/")) 
-//     .ServerCertificateValidationCallback((sender, certificate, chain, errors) => true)
-//     .BasicAuthentication("elastic", "p1vrgOeVbPfN=YOHhOD" +
-//                                     "a")
-//     .EnableApiVersioningHeader();
 
-var settings = new ConnectionSettings(new Uri("http://localhost:5001/")) 
+var elasticsearchUrl = configuration["ELK:URl"]; // Replace with your Elasticsearch connection string
+
+if (string.IsNullOrEmpty(elasticsearchUrl))
+{
+    throw new InvalidOperationException("Elasticsearch URL is not configured.");
+}
+
+var settings = new ConnectionSettings(new Uri(elasticsearchUrl)) 
     .ServerCertificateValidationCallback((sender, certificate, chain, errors) => true)
-    .BasicAuthentication("elastic", "p1vrgOeVbPfN=YOHhOD" +
+    .BasicAuthentication("elastic1", "p1vrgOeVbPfN=YOHhOD" +
                                     "a")
     .EnableApiVersioningHeader();
 var client = new ElasticClient(settings);
@@ -40,7 +44,6 @@ Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(configuration)
     .Enrich.FromLogContext()
     .Enrich.WithExceptionDetails()
-    // .WriteTo.Seq("http://localhost:5341")
     .CreateLogger();
 
 builder.Logging.AddSerilog();
@@ -51,7 +54,7 @@ builder.Services.AddDbContext<EzMapContext>(
 );
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IIdentityService, IdentityService>();
-builder.Services.AddSingleton(typeof(IElasticSearchService<>), typeof(ElasticSearchService<>));
+builder.Services.AddSingleton<IElasticSearchService, ElasticSearchService>();
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<PoiCreateDtoValidator>();
 
@@ -110,9 +113,7 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddHttpContextAccessor();
 
-string environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-
-if (environment != "TEST")
+if (!environmentName.Equals("Test"))
 {
     using (var scope = builder.Services.BuildServiceProvider().CreateScope())
     {
@@ -124,17 +125,18 @@ if (environment != "TEST")
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
-
 app.MapControllers();
 
 app.Run();
+
+static string GetEnvironmentName()
+{
+    return Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
+}
 
 public partial class Program
 {

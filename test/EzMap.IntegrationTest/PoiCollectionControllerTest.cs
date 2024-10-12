@@ -1,10 +1,13 @@
 ﻿using System.Net;
 using System.Text.Json;
+using EzMap.Api.Services;
 using EzMap.Domain.Constants;
 using EzMap.Domain.Dtos;
 using EzMap.Domain.Models;
+using EzMap.Domain.Result;
 using EzMap.IntegrationTest.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
+using Nest;
 
 namespace EzMap.IntegrationTest;
 
@@ -170,23 +173,32 @@ public class PoiCollectionControllerTest
         var app = new TestWebAppFactory<Program>();
         var client = app.CreateClient();
         using var scope = app.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
-
         var token = await TestHelper.GetDefaultUserToken(client);
+        var esClient = scope.ServiceProvider.GetRequiredService<IElasticSearchService>();
 
-        var user = new User("thanh", "thanh", "thanh", "thanh");
-        dbContext.Users.Add(user);
+        var poiCol = new PoiCollectionCreateDto
+        (
+            "THANH NUMBER FAV PLACE",
+            "citygarden"
+        );
+        
+        var createResponse = await client.RequestAsJsonAsyncWithToken(HttpMethod.Post, "api/poicollection/", token, poiCol);
 
-        var poiCol = new PoiCollection("home", "59 ntt", TestUser.DefaultUser.Id);
-        dbContext.PoiCollections.Add(poiCol);
-
-        await dbContext.SaveChangesAsync();
-
+        var createJson = await createResponse.Content.ReadAsStringAsync();
+        var createObject = JsonSerializer.Deserialize<PoiColCreateResult>(createJson, new JsonSerializerOptions()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        });
+        
+        
         using var response =
-            await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Delete, $"api/poicollection/{poiCol.Id}",
+            await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Delete, $"api/poicollection/{createObject?.Id}",
                 token);
-
         response.EnsureSuccessStatusCode();
+        
+        var query = new QueryContainerDescriptor<object>().Term(t => t.Field("id").Value(createObject?.Id));
+        List<object>? docDeleted = await esClient.Query(query);
+        Assert.True(docDeleted is { Count: 0 });
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 

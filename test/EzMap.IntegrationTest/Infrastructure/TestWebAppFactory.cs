@@ -32,7 +32,7 @@ public class TestWebAppFactory<TProgram> : WebApplicationFactory<TProgram> where
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "TEST");
+        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Test");
         
         builder.ConfigureServices(services =>
         {

@@ -1,5 +1,6 @@
 ﻿using EzMap.Api.Services;
 using EzMap.Domain.Dtos;
+using EzMap.Domain.Indexes;
 using EzMap.Domain.Models;
 using EzMap.Domain.Repositories;
 using EzMap.Domain.Services;
@@ -16,13 +17,40 @@ public class PoiCollectionController : ControllerBase
     [HttpPost("")]
     public async Task<IActionResult> AddPoiCollection([FromBody] PoiCollectionCreateDto dto,
         [FromServices] IUnitOfWork uow,
-        [FromServices] IIdentityService identityService)
+        [FromServices] IIdentityService identityService, [FromServices] IElasticSearchService elasticSearchService)
     {
-        uow.PoiCollectionRepository.AddPoiCollection(dto.WithUserId(identityService.GetUserId()));
-
-        return await uow.SaveAsync() > 0
-            ? Ok("Your poi collection is created successfully!")
-            : new StatusCodeResult(StatusCodes.Status500InternalServerError);
+        try
+        {
+            var poiCollectionId = uow.PoiCollectionRepository.AddPoiCollection(dto.WithUserId(identityService.GetUserId()));
+            var dbResult = await uow.SaveAsync();
+            if (dbResult <= 0)
+            {
+                return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+            }
+            
+            var poiCollectionCreateIndex = new PoiCollectionCreateIndex(poiCollectionId, dto.Name, dto.Description);
+            var esResult = await elasticSearchService.AddOrUpdate(poiCollectionCreateIndex);
+            if (!esResult)
+            {
+                return Ok(new
+                {
+                    Message = "Your poi collection is created successfully, but indexing encountered an issue.",
+                    name = dto.Name
+                });
+            }
+            
+            return Ok(new
+            {
+                Message = "Your poi collection is created and indexed successfully!",
+                Name = dto.Name,
+                Id = poiCollectionId,
+            });
+        }
+        catch (Exception e)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "An error occurred while processing your request.");
+        }
     }
 
     [Authorize]
@@ -52,11 +80,16 @@ public class PoiCollectionController : ControllerBase
     [Authorize]
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update([FromBody] PoiCollectionUpdateDto dto, [FromServices] IUnitOfWork uow,
-        [FromServices] IIdentityService identityService)
+        [FromServices] IIdentityService identityService, [FromServices] IElasticSearchService elasticSearchService)
     {
         var dbPoiCol = await uow.PoiCollectionRepository.GetPoiCollectionById(identityService.GetUserId(), dto.Id);
 
-        if (dbPoiCol is not null) uow.PoiCollectionRepository.UpdatePoiCollectionAsync(dbPoiCol, dto);
+        if (dbPoiCol is not null)
+        {
+            uow.PoiCollectionRepository.UpdatePoiCollectionAsync(dbPoiCol, dto);
+            var poiColUpdateIndex = new PoiCollectionUpdateIndex(dto.Id, dto.Name, dto.Description);
+            await elasticSearchService.AddOrUpdate(poiColUpdateIndex);
+        }
 
         return await uow.SaveAsync() > 0
             ? Ok("Your poi collection is updated successfully")
@@ -65,7 +98,7 @@ public class PoiCollectionController : ControllerBase
 
     [Authorize]
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id, [FromServices] IUnitOfWork uow)
+    public async Task<IActionResult> Delete(Guid id, [FromServices] IUnitOfWork uow, [FromServices] IElasticSearchService elasticSearchService)
     {
         if (string.IsNullOrEmpty(id.ToString()))
         {
@@ -73,7 +106,7 @@ public class PoiCollectionController : ControllerBase
         }
 
         await uow.PoiCollectionRepository.DeletePoiCollectionAsync(id);
-
+        await elasticSearchService.Remove(id.ToString());
         return await uow.SaveAsync() > 0
             ? Ok("Your poi collection is deleted successfully!")
             : new StatusCodeResult(StatusCodes.Status500InternalServerError);

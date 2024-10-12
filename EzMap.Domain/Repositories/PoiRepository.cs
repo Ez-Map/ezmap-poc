@@ -9,7 +9,7 @@ namespace EzMap.Domain.Repositories;
 
 public interface IPoiRepository
 {
-    void AddPoi(PoiCreateDto dto, CancellationToken token = default);
+    Guid AddPoi(PoiCreateDto dto, CancellationToken token = default);
 
     Task<List<Poi>?> GetListPoiAsync(Guid? userId, CancellationToken token = default);
 
@@ -43,12 +43,15 @@ public class PoiRepository : IPoiRepository
         return poi;
     }
 
-    public void AddPoi(PoiCreateDto dto, CancellationToken token = default)
+    public Guid AddPoi(PoiCreateDto dto, CancellationToken token = default)
     {
         Poi poi = new Poi(dto.Name, dto.Address, dto.UserId);
-        _dbContext.Pois?.AddAsync(poi, token);
         
-        _logger.LogInformation($"Add new Poi: {poi.Name}, ({poi.Id}) for User ID: {poi.UserId}");
+        _dbContext.Pois?.AddAsync(poi, token);
+
+        _logger.LogInformation($"Prepared new Poi to add: {poi.Name}, ({poi.Id}) for User ID: {poi.UserId}");
+
+        return poi.Id;
     }
 
     public void UpdatePoiAsync(Poi dbPoi,PoiUpdateDto dto)

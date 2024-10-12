@@ -5,10 +5,10 @@ services:
     build: ./EzMap.Api/
     ports:
       - "5000:80"
+      - "5003:443"
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__myDb1=Server=db;Database=EzMap;User Id=sa;Password=Jko3va-D9821jhsvGD; Trust Server Certificate=True;
-      - ELK__URL=http://es:9200
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__myDb1=;
     depends_on:
       - db
       - seq
@@ -17,7 +17,7 @@ services:
   db:
     image: mcr.microsoft.com/mssql/server:2017-latest
     environment:
-      SA_PASSWORD: "Jko3va-D9821jhsvGD"
+      SA_PASSWORD: ""
       ACCEPT_EULA: "Y"
 
   seq:
@@ -30,6 +30,7 @@ services:
     environment:
       discovery.type: 'single-node'
       xpack.security.enabled: 'false'
+      xpack.security.http.ssl.enabled: 'false'  # Disable SSL
     ports:
       - "5001:9200"
     volumes:

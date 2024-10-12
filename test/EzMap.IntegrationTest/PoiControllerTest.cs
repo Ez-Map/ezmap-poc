@@ -1,10 +1,14 @@
-﻿using System.Net;
+﻿using System.Collections;
+using System.Net;
 using System.Text.Json;
+using EzMap.Api.Services;
 using EzMap.Domain;
 using EzMap.Domain.Dtos;
 using EzMap.Domain.Models;
+using EzMap.Domain.Result;
 using EzMap.IntegrationTest.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
+using Nest;
 
 namespace EzMap.IntegrationTest;
 
@@ -155,20 +159,30 @@ public class PoiControllerTest
         var app = new TestWebAppFactory<Program>();
         var client = app.CreateClient();
         using var scope = app.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
         var token = await TestHelper.GetDefaultUserToken(client);
+        var esClient = scope.ServiceProvider.GetRequiredService<IElasticSearchService>();
 
+        var poi = new PoiCreateDto
+        (
+            "THANH NUMBER FAV PLACE",
+            "citygarden"
+        );
 
-        var user = new User("thanh", "thanh", "thanh", "thanh");
-        dbContext.Users.Add(user);
-        var poi = new Poi("home", "59 ntt", user.Id);
-        dbContext.Pois.Add(poi);
+        var createResponse = await client.RequestAsJsonAsyncWithToken(HttpMethod.Post, "api/poi/", token, poi);
 
-        await dbContext.SaveChangesAsync();
-        using var response =
-            await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Delete, $"api/poi/{poi.Id}", token);
-        response.EnsureSuccessStatusCode();
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var createJson = await createResponse.Content.ReadAsStringAsync();
+        var createObject = JsonSerializer.Deserialize<PoiCreateResult>(createJson, new JsonSerializerOptions()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        });
+        
+        var deleteResponse = await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Delete, $"api/poi/{createObject?.Id}", token);
+        deleteResponse.EnsureSuccessStatusCode();
+        
+        var query = new QueryContainerDescriptor<object>().Term(t => t.Field("id").Value(createObject?.Id));
+        List<object>? docDeleted = await esClient.Query(query);
+        Assert.True(docDeleted is { Count: 0 });
+        Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
     }
 
     [Fact]
