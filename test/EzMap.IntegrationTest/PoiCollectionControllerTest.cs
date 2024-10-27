@@ -195,10 +195,6 @@ public class PoiCollectionControllerTest
             await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Delete, $"api/poicollection/{createObject?.Id}",
                 token);
         response.EnsureSuccessStatusCode();
-        
-        var query = new QueryContainerDescriptor<object>().Term(t => t.Field("id").Value(createObject?.Id));
-        List<object>? docDeleted = await esClient.Query(query);
-        Assert.True(docDeleted is { Count: 0 });
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 

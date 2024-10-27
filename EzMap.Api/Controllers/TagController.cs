@@ -81,17 +81,40 @@ public class TagController : ControllerBase
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> DeleteTag(Guid id, [FromServices] IUnitOfWork uow, [FromServices] IElasticSearchService elasticSearchService)
     {
-        if (string.IsNullOrEmpty(id.ToString()))
+        try
         {
-            return BadRequest("Please provide a valid id!");
-        }
+            if (string.IsNullOrEmpty(id.ToString()))
+            {
+                return BadRequest("Please provide a valid id!");
+            }
 
-        await uow.TagRepository.DeleteTagAsync(id);
-        await elasticSearchService.Remove(id.ToString());
-        
-        return await uow.SaveAsync() > 0
-            ? Ok("Your tag is deleted successfully!")
-            : new StatusCodeResult(StatusCodes.Status500InternalServerError);
+            await uow.TagRepository.DeleteTagAsync(id);
+            var dbResult = await uow.SaveAsync();
+            var esResult = await elasticSearchService.Remove(id.ToString());
+            if (dbResult <= 0)
+            {
+                return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+            }
+
+            if (!esResult)
+            {
+                return Ok(new
+                {
+                    Message =
+                        "Your tag is deleted successfully, but delete its ES doc encountered an issue.",
+                });
+            }
+
+            return Ok(new
+            {
+                Message = "Your tag is deleted successfully!",
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "An error occurred while processing your request.");
+        }
     }
 
     [Authorize]

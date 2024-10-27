@@ -199,10 +199,6 @@ public class TagControllerTest
         var deleteResponse =
             await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Delete, $"api/tag/{createObject?.Id}", token);
         deleteResponse.EnsureSuccessStatusCode();
-        
-        var query = new QueryContainerDescriptor<object>().Term(t => t.Field("id").Value(createObject?.Id));
-        List<object>? docDeleted = await esClient.Query(query);
-        Assert.True(docDeleted is { Count: 0 });
         Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
     }
 

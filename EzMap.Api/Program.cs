@@ -24,21 +24,7 @@ var configuration = new ConfigurationBuilder()
     .AddEnvironmentVariables()
     .Build();
 
-var elasticsearchUrl = configuration["ELK:URl"]; // Replace with your Elasticsearch connection string
 
-if (string.IsNullOrEmpty(elasticsearchUrl))
-{
-    throw new InvalidOperationException("Elasticsearch URL is not configured.");
-}
-
-var settings = new ConnectionSettings(new Uri(elasticsearchUrl)) 
-    .ServerCertificateValidationCallback((sender, certificate, chain, errors) => true)
-    .BasicAuthentication("elastic1", "p1vrgOeVbPfN=YOHhOD" +
-                                    "a")
-    .EnableApiVersioningHeader();
-var client = new ElasticClient(settings);
-
-builder.Services.AddSingleton<IElasticClient>(client);
 
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(configuration)
@@ -54,7 +40,6 @@ builder.Services.AddDbContext<EzMapContext>(
 );
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IIdentityService, IdentityService>();
-builder.Services.AddSingleton<IElasticSearchService, ElasticSearchService>();
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<PoiCreateDtoValidator>();
 
@@ -120,6 +105,23 @@ if (!environmentName.Equals("Test"))
         var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
         dbContext.Database.Migrate();
     }
+    
+    var elasticsearchUrl = configuration["ELK:URl"]; // Replace with your Elasticsearch connection string
+
+    if (string.IsNullOrEmpty(elasticsearchUrl))
+    {
+        throw new InvalidOperationException("Elasticsearch URL is not configured.");
+    }
+
+    var settings = new ConnectionSettings(new Uri(elasticsearchUrl)) 
+        .ServerCertificateValidationCallback((sender, certificate, chain, errors) => true)
+        .BasicAuthentication("elastic1", "p1vrgOeVbPfN=YOHhOD" +
+                                         "a")
+        .EnableApiVersioningHeader();
+    var client = new ElasticClient(settings);
+
+    builder.Services.AddSingleton<IElasticClient>(client);
+    builder.Services.AddSingleton<IElasticSearchService, ElasticSearchService>();
 }
 
 var app = builder.Build();

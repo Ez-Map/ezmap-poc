@@ -1,6 +1,7 @@
 ﻿using System.Data.Common;
 using EzMap.Api.Services;
 using EzMap.Domain;
+using EzMap.Domain.Indexes;
 using EzMap.Domain.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -9,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Moq;
 using Nest;
 
 namespace EzMap.IntegrationTest.Infrastructure;
@@ -62,6 +64,37 @@ public class TestWebAppFactory<TProgram> : WebApplicationFactory<TProgram> where
                 var connection = container.GetRequiredService<DbConnection>();
                 options.UseSqlite(connection);
             });
+            
+            // Add a mocked IElasticSearchService
+            var mockElasticSearchService = new Mock<IElasticSearchService>();
+
+            // Set up mock behavior here as needed
+            mockElasticSearchService
+                .Setup(es => es.AddOrUpdate(It.IsAny<PoiCreateIndex>()))
+                .ReturnsAsync(true);
+            
+            mockElasticSearchService
+                .Setup(es => es.AddOrUpdate(It.IsAny<TagCreateIndex>()))
+                .ReturnsAsync(true);
+            
+            mockElasticSearchService
+                .Setup(es => es.AddOrUpdate(It.IsAny<PoiCollectionCreateIndex>()))
+                .ReturnsAsync(true);
+
+            mockElasticSearchService
+                .Setup(es => es.Remove(It.IsAny<string>()))
+                .ReturnsAsync(true);
+
+            mockElasticSearchService
+                .Setup(es => es.Query(It.IsAny<QueryContainer>())).ReturnsAsync(new List<object>
+                {
+                    () =>
+                    {
+                        new List<object>();
+                    }
+                });
+
+            services.AddSingleton(mockElasticSearchService.Object);
         });
 
         builder.ConfigureAppConfiguration((ctx, builder) => { builder.AddJsonFile("appsettings.json"); });
