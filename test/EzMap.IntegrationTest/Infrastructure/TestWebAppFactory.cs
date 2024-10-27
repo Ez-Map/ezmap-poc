@@ -97,8 +97,6 @@ public class TestWebAppFactory<TProgram> : WebApplicationFactory<TProgram> where
             services.AddSingleton(mockElasticSearchService.Object);
         });
 
-        builder.ConfigureAppConfiguration((ctx, builder) => { builder.AddJsonFile("appsettings.json"); });
-
-        builder.UseEnvironment("Development");
+        builder.UseEnvironment("Test");
     }
 }

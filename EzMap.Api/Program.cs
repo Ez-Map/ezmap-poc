@@ -16,7 +16,7 @@ using Serilog.Exceptions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var environmentName = GetEnvironmentName();
+var environmentName = builder.Environment.EnvironmentName;
 
 var configuration = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
@@ -42,8 +42,9 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IIdentityService, IdentityService>();
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<PoiCreateDtoValidator>();
-
-var appSettings = builder.Configuration.GetValue<string>("AppSecret");
+// builder.Environment.EnvironmentName = "Test";
+// Console.WriteLine($"Environment: {builder.Environment.EnvironmentName}");
+var appSettings = configuration["AppSecret"];
 var key = Encoding.ASCII.GetBytes(appSettings);
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication(x =>
@@ -134,11 +135,6 @@ app.UseHttpsRedirection();
 app.MapControllers();
 
 app.Run();
-
-static string GetEnvironmentName()
-{
-    return Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
-}
 
 public partial class Program
 {
