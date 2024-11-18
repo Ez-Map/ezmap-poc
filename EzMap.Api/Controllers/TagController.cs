@@ -17,30 +17,50 @@ public class TagController : ControllerBase
     public async Task<IActionResult> Create([FromBody] TagCreateDto dto, [FromServices] IUnitOfWork uow,
         [FromServices] IIdentityService identityService, [FromServices] IElasticSearchService elasticSearchService)
     {
-        var tagId = uow.TagRepository.AddTag(dto.WithUserId(identityService.GetUserId()));
-        var dbResult = await uow.SaveAsync();
-        if (dbResult <= 0)
+        try
         {
-            return new StatusCodeResult(StatusCodes.Status500InternalServerError);
-        }
-        
-        var tagCreateIndex = new TagCreateIndex(tagId, dto.Name, dto.Description);
-        var esResult = await elasticSearchService.AddOrUpdate(tagCreateIndex);
-        if (!esResult)
-        {
-            return Ok(new
+            await using var transaction = await uow.BeginTransactionAsync();
+            try
             {
-                Message = "Your tag is created successfully, but indexing encountered an issue.",
-                name = dto.Name
-            });
-        }
+                var tagId = uow.TagRepository.AddTag(dto.WithUserId(identityService.GetUserId()));
+                var dbResult = await uow.SaveAsync();
+                if (dbResult <= 0)
+                {
+                    await transaction.RollbackAsync();
+                    return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+                }
 
-        return Ok(new
+                var tagCreateIndex = new TagCreateIndexingModel(tagId, dto.Name, dto.Description);
+                var esResult = await elasticSearchService.AddOrUpdate(tagCreateIndex);
+                if (!esResult)
+                {
+                    await transaction.RollbackAsync();
+                    return Ok(new
+                    {
+                        Message = "Failed to index the tag. The operation has been rolled back.",
+                        name = dto.Name
+                    });
+                }
+
+                await transaction.CommitAsync();
+                return Ok(new
+                {
+                    Message = "Your tag is created and indexed successfully!",
+                    Name = dto.Name,
+                    Id = tagId,
+                });
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+        catch
         {
-            Message = "Your tag is created and indexed successfully!",
-            Name = dto.Name,
-            Id = tagId,
-        });
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "An error occurred while processing your request.");
+        }
     }
 
     [Authorize]
@@ -48,18 +68,47 @@ public class TagController : ControllerBase
     public async Task<IActionResult> UpdateTag([FromBody] TagUpdateDto dto, [FromServices] IUnitOfWork uow,
         [FromServices] IIdentityService identityService, [FromServices] IElasticSearchService elasticSearchService)
     {
-        var dbTag = await uow.TagRepository.GetTagById(identityService.GetUserId(), dto.Id);
-
-        if (dbTag is not null)
+        try
         {
-            uow.TagRepository.UpdateTag(dbTag, dto.WithUserId(identityService.GetUserId()));
-            var tagUpdateIndex = new TagUpdateIndex(dto.Id, dto.Name, dto.Description);
-            await elasticSearchService.AddOrUpdate(tagUpdateIndex);
-        }
+            await using var transaction = await uow.BeginTransactionAsync();
+            try
+            {
+                var dbTag = await uow.TagRepository.GetTagById(identityService.GetUserId(), dto.Id);
 
-        return await uow.SaveAsync() > 0
-            ? Ok("Your tag is updated successfully!")
-            : new StatusCodeResult(StatusCodes.Status500InternalServerError);
+                if (dbTag is not null)
+                {
+                    uow.TagRepository.UpdateTag(dbTag, dto.WithUserId(identityService.GetUserId()));
+                    var dbResult = await uow.SaveAsync();
+                    if (dbResult <= 0)
+                    {
+                        await transaction.RollbackAsync();
+                        return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+                    }
+
+                    var tagUpdateIndex = new TagUpdateIndexingModel(dto.Id, dto.Name, dto.Description);
+                    var esResult = await elasticSearchService.AddOrUpdate(tagUpdateIndex);
+                    if (!esResult)
+                    {
+                        await transaction.RollbackAsync();
+                        return StatusCode(StatusCodes.Status500InternalServerError,
+                            "Failed to index the tag. The operation has been rolled back.");
+                    }
+                }
+
+                await transaction.CommitAsync();
+                return Ok("Your tag is updated successfully!");
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+        catch
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "An error occurred while processing your request.");
+        }
     }
 
     [Authorize]
@@ -88,29 +137,38 @@ public class TagController : ControllerBase
                 return BadRequest("Please provide a valid id!");
             }
 
-            await uow.TagRepository.DeleteTagAsync(id);
-            var dbResult = await uow.SaveAsync();
-            var esResult = await elasticSearchService.Remove(id.ToString());
-            if (dbResult <= 0)
+            await using var transaction = await uow.BeginTransactionAsync();
+            try
             {
-                return new StatusCodeResult(StatusCodes.Status500InternalServerError);
-            }
+                await uow.TagRepository.DeleteTagAsync(id);
+                var dbResult = await uow.SaveAsync();
+                if (dbResult <= 0)
+                {
+                    await transaction.RollbackAsync();
+                    return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+                }
 
-            if (!esResult)
-            {
+                var esResult = await elasticSearchService.Remove(id.ToString());
+                if (!esResult)
+                {
+                    await transaction.RollbackAsync();
+                    return StatusCode(StatusCodes.Status500InternalServerError,
+                        "Failed to remove tag from ElasticSearch. The operation has been rolled back.");
+                }
+
+                await transaction.CommitAsync();
                 return Ok(new
                 {
-                    Message =
-                        "Your tag is deleted successfully, but delete its ES doc encountered an issue.",
+                    Message = "Your tag is deleted successfully!",
                 });
             }
-
-            return Ok(new
+            catch
             {
-                Message = "Your tag is deleted successfully!",
-            });
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
-        catch (Exception ex)
+        catch
         {
             return StatusCode(StatusCodes.Status500InternalServerError,
                 "An error occurred while processing your request.");

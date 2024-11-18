@@ -2,15 +2,14 @@ using FluentValidation;
 
 namespace EzMap.Domain.Indexes;
 
-public class PoiUpdateIndex
+public class PoiCreateIndexingModel
 {
-    public PoiUpdateIndex(Guid poiId, string name, string address)
+    public PoiCreateIndexingModel(Guid id, string name, string address)
     {
-        Id = poiId;
+        Id = id;
         Name = name;
         Address = address;
     }
-
 
     public Guid Id { get; set; }
 

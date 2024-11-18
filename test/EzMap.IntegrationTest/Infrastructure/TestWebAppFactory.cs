@@ -70,15 +70,27 @@ public class TestWebAppFactory<TProgram> : WebApplicationFactory<TProgram> where
 
             // Set up mock behavior here as needed
             mockElasticSearchService
-                .Setup(es => es.AddOrUpdate(It.IsAny<PoiCreateIndex>()))
+                .Setup(es => es.AddOrUpdate(It.IsAny<PoiCreateIndexingModel>()))
                 .ReturnsAsync(true);
             
             mockElasticSearchService
-                .Setup(es => es.AddOrUpdate(It.IsAny<TagCreateIndex>()))
+                .Setup(es => es.AddOrUpdate(It.IsAny<PoiUpdateIndexingModel>()))
                 .ReturnsAsync(true);
             
             mockElasticSearchService
-                .Setup(es => es.AddOrUpdate(It.IsAny<PoiCollectionCreateIndex>()))
+                .Setup(es => es.AddOrUpdate(It.IsAny<TagCreateIndexingModel>()))
+                .ReturnsAsync(true);
+            
+            mockElasticSearchService
+                .Setup(es => es.AddOrUpdate(It.IsAny<TagUpdateIndexingModel>()))
+                .ReturnsAsync(true);
+            
+            mockElasticSearchService
+                .Setup(es => es.AddOrUpdate(It.IsAny<PoiCollectionCreateIndexingModel>()))
+                .ReturnsAsync(true);
+            
+            mockElasticSearchService
+                .Setup(es => es.AddOrUpdate(It.IsAny<PoiCollectionUpdateIndexingModel>()))
                 .ReturnsAsync(true);
 
             mockElasticSearchService

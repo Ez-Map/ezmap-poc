@@ -16,6 +16,7 @@ public interface IUnitOfWork
     
     Task<int> SaveAsync();
     IDbContextTransaction BeginTransaction();
+    Task<IDbContextTransaction> BeginTransactionAsync();
 }
 
 public class UnitOfWork : IDisposable ,IUnitOfWork
@@ -64,6 +65,11 @@ public class UnitOfWork : IDisposable ,IUnitOfWork
     public IDbContextTransaction BeginTransaction()
     {
         return _context.Database.BeginTransaction();
+    }
+
+    public async Task<IDbContextTransaction> BeginTransactionAsync()
+    {
+        return await _context.Database.BeginTransactionAsync();
     }
 
     private void SetBaseAuditInfo()

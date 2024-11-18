@@ -1,8 +1,8 @@
 namespace EzMap.Domain.Indexes;
 
-public class TagCreateIndex
+public class PoiCollectionCreateIndexingModel
 {
-    public TagCreateIndex(Guid id, string name, string description)
+    public PoiCollectionCreateIndexingModel(Guid id, string name, string description)
     {
         Id = id;
         Name = name;

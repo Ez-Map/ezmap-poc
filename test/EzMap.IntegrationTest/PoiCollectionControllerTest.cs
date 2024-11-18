@@ -174,7 +174,6 @@ public class PoiCollectionControllerTest
         var client = app.CreateClient();
         using var scope = app.Services.CreateScope();
         var token = await TestHelper.GetDefaultUserToken(client);
-        var esClient = scope.ServiceProvider.GetRequiredService<IElasticSearchService>();
 
         var poiCol = new PoiCollectionCreateDto
         (
