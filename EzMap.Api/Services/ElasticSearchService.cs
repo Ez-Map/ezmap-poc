@@ -26,7 +26,7 @@ public class ElasticSearchService : IElasticSearchService
         _client = client;
     }
 
-    public ElasticSearchService Index(string indexName)
+    public ElasticSearchService SetIndex(string indexName)
     {
         _indexName = indexName;
         return this;
@@ -39,7 +39,7 @@ public class ElasticSearchService : IElasticSearchService
             await _client.Indices.CreateAsync(indexName, c => c .Map<object>(m => m.AutoMap()));
         }
 
-        Index(indexName);
+        SetIndex(indexName);
     }
 
     public async Task<bool> AddOrUpdateBulk(IEnumerable<object> documents)

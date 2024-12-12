@@ -47,7 +47,7 @@ public class PoiRepository : IPoiRepository
     {
         Poi poi = new Poi(dto.Name, dto.Address, dto.UserId);
         
-        _dbContext.Pois?.AddAsync(poi, token);
+        _dbContext.Pois.AddAsync(poi, token);
 
         _logger.LogInformation($"Prepared new Poi to add: {poi.Name}, ({poi.Id}) for User ID: {poi.UserId}");
 
@@ -85,16 +85,16 @@ public class PoiRepository : IPoiRepository
 
     public async Task<List<Poi>?> Search(Guid? userId, string keyword, CancellationToken token = default)
     {
-        var pois = await _dbContext.Pois.ToListAsync(cancellationToken: token);
+        var pois = new List<Poi>();
 
         if (!String.IsNullOrEmpty(keyword))
         {
-            pois = pois.Where(x => (x.Address.ToLower().Contains(keyword.ToLower()) || x.Name.ToLower().Contains(keyword.ToLower())) && x.UserId == userId ).ToList();
+            pois = await _dbContext.Pois.Where(x => (x.Address.ToLower().Contains(keyword.ToLower()) || x.Name.ToLower().Contains(keyword.ToLower())) && x.UserId == userId ).ToListAsync(token);
         }
 
         if (!pois.Any())
         {
-            _logger.LogInformation("This poi is not existing");
+            _logger.LogInformation($"There is no matched poi searched with Keyword: {keyword} (UserId : {userId})");
         }
         
         _logger.LogInformation($"{pois.Count} matched poi(s) searched with Keyword: {keyword} (UserId : {userId})");

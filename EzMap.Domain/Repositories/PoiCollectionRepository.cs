@@ -57,7 +57,7 @@ public class PoiCollectionRepository : IPoiCollectionRepository
     {
         var poiCollection = new PoiCollection(dto.Name, dto.Description, dto.UserId);
 
-        _dbContext.PoiCollections?.Add(poiCollection);
+        _dbContext.PoiCollections.Add(poiCollection);
         
         _logger.LogInformation($"Prepared a new Poi Collection to add: {poiCollection.Name} ({poiCollection.Id})");
 

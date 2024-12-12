@@ -1,4 +1,5 @@
 using System.Text;
+using EzMap.Api.Middleware;
 using EzMap.Api.Services;
 using EzMap.Domain.Dtos;
 using EzMap.Domain.Models;
@@ -42,8 +43,6 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IIdentityService, IdentityService>();
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<PoiCreateDtoValidator>();
-// builder.Environment.EnvironmentName = "Test";
-// Console.WriteLine($"Environment: {builder.Environment.EnvironmentName}");
 var appSettings = configuration["AppSecret"];
 var key = Encoding.ASCII.GetBytes(appSettings);
 builder.Services.AddAuthorization();
@@ -133,7 +132,8 @@ app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 app.MapControllers();
-
+app.UseMiddleware<ExceptionMiddleware>();
+app.UseHttpsRedirection();
 app.Run();
 
 public partial class Program

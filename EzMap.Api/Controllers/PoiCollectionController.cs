@@ -21,48 +21,43 @@ public class PoiCollectionController : ControllerBase
         [FromServices] IUnitOfWork uow,
         [FromServices] IIdentityService identityService, [FromServices] IElasticSearchService elasticSearchService)
     {
+        await using var transaction = await uow.BeginTransactionAsync();
         try
         {
-            await using var transaction = await uow.BeginTransactionAsync();
-            try
-            {
-                var poiCollectionId = uow.PoiCollectionRepository.AddPoiCollection(dto.WithUserId(identityService.GetUserId()));
-                var dbResult = await uow.SaveAsync();
-                if (dbResult <= 0)
-                {
-                    await transaction.RollbackAsync();
-                    return new StatusCodeResult(StatusCodes.Status500InternalServerError);
-                }
-                var poiCollectionCreateIndex = new PoiCollectionCreateIndexingModel(poiCollectionId, dto.Name, dto.Description);
-                var esResult = await elasticSearchService.AddOrUpdate(poiCollectionCreateIndex);
-                if (!esResult)
-                {
-                    await transaction.RollbackAsync();
-                    return Ok(new
-                    {
-                        Message = "Failed to index the POI collection. The operation has been rolled back.",
-                        name = dto.Name
-                    });
-                }
-
-                await transaction.CommitAsync();
-                return Ok(new
-                {
-                    Message = "Your poi collection is created and indexed successfully!",
-                    Name = dto.Name,
-                    Id = poiCollectionId,
-                });
-            }
-            catch
+            var poiCollectionId =
+                uow.PoiCollectionRepository.AddPoiCollection(dto.WithUserId(identityService.GetUserId()));
+            var dbResult = await uow.SaveAsync();
+            if (dbResult <= 0)
             {
                 await transaction.RollbackAsync();
-                throw;
+                return new StatusCodeResult(StatusCodes.Status500InternalServerError);
             }
+
+            var poiCollectionCreateIndex =
+                new PoiCollectionCreateIndexingModel(poiCollectionId, dto.Name, dto.Description);
+            var esResult = await elasticSearchService.AddOrUpdate(poiCollectionCreateIndex);
+            if (!esResult)
+            {
+                await transaction.RollbackAsync();
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    Message = "Failed to index the POI collection. The operation has been rolled back.",
+                    name = dto.Name
+                });
+            }
+
+            await transaction.CommitAsync();
+            return Ok(new
+            {
+                Message = "Your poi collection is created and indexed successfully!",
+                Name = dto.Name,
+                Id = poiCollectionId,
+            });
         }
-        catch (Exception ex)
+        catch
         {
-            return StatusCode(StatusCodes.Status500InternalServerError,
-                "An error occurred while processing your request.");
+            await transaction.RollbackAsync();
+            throw;
         }
     }
 
@@ -95,46 +90,42 @@ public class PoiCollectionController : ControllerBase
     public async Task<IActionResult> Update([FromBody] PoiCollectionUpdateDto dto, [FromServices] IUnitOfWork uow,
         [FromServices] IIdentityService identityService, [FromServices] IElasticSearchService elasticSearchService)
     {
+        await using var transaction = await uow.BeginTransactionAsync();
         try
         {
-            await using var transaction = await uow.BeginTransactionAsync();
-            try
+            var dbPoiCol =
+                await uow.PoiCollectionRepository.GetPoiCollectionById(identityService.GetUserId(), dto.Id);
+
+            if (dbPoiCol is null)
             {
-                var dbPoiCol = await uow.PoiCollectionRepository.GetPoiCollectionById(identityService.GetUserId(), dto.Id);
-
-                if (dbPoiCol is not null)
-                {
-                    uow.PoiCollectionRepository.UpdatePoiCollectionAsync(dbPoiCol, dto);
-                    var dbResult = await uow.SaveAsync();
-                    if (dbResult <= 0)
-                    {
-                        await transaction.RollbackAsync();
-                        return new StatusCodeResult(StatusCodes.Status500InternalServerError);
-                    }
-
-                    var poiColUpdateIndex = new PoiCollectionUpdateIndexingModel(dto.Id, dto.Name, dto.Description);
-                    var esResult = await elasticSearchService.AddOrUpdate(poiColUpdateIndex);
-                    if (!esResult)
-                    {
-                        await transaction.RollbackAsync();
-                        return StatusCode(StatusCodes.Status500InternalServerError,
-                            "Failed to index the POI collection. The operation has been rolled back.");
-                    }
-                }
-
-                await transaction.CommitAsync();
-                return Ok("Your poi collection is updated successfully");
+                return NotFound("Poi collection not found.");
             }
-            catch
+
+            uow.PoiCollectionRepository.UpdatePoiCollectionAsync(dbPoiCol, dto);
+            var dbResult = await uow.SaveAsync();
+            
+            if (dbResult == 0)
+            {
+                Console.WriteLine("No changes detected. Skipping commit.");
+                return Ok("No changes were made to the POI collection.");
+            }
+
+            var poiColUpdateIndex = new PoiCollectionUpdateIndexingModel(dto.Id, dto.Name, dto.Description);
+            var esResult = await elasticSearchService.AddOrUpdate(poiColUpdateIndex);
+            if (!esResult)
             {
                 await transaction.RollbackAsync();
-                throw;
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    "Failed to index the POI collection. The operation has been rolled back.");
             }
+
+            await transaction.CommitAsync();
+            return Ok("Your poi collection is updated successfully");
         }
-        catch (Exception ex)
+        catch
         {
-            return StatusCode(StatusCodes.Status500InternalServerError,
-                "An error occurred while processing your request.");
+            await transaction.RollbackAsync();
+            throw;
         }
     }
 
@@ -143,49 +134,44 @@ public class PoiCollectionController : ControllerBase
     public async Task<IActionResult> Delete(Guid id, [FromServices] IUnitOfWork uow,
         [FromServices] IElasticSearchService elasticSearchService)
     {
+        await using var transaction = await uow.BeginTransactionAsync();
+
         try
         {
-            await using var transaction = await uow.BeginTransactionAsync();
-
-            try
+            if (string.IsNullOrEmpty(id.ToString()))
             {
-                if (string.IsNullOrEmpty(id.ToString()))
-                {
-                    return BadRequest("Please provide a valid id!");
-                }
-
-                await uow.PoiCollectionRepository.DeletePoiCollectionAsync(id);
-                var dbResult = await uow.SaveAsync();
-                if(dbResult <= 0){
-                    await transaction.RollbackAsync();
-                    return new StatusCodeResult(StatusCodes.Status500InternalServerError);
-                }
-                var esResult = await elasticSearchService.Remove(id.ToString());
-                if (!esResult)
-                {
-                    await transaction.RollbackAsync();
-                    return Ok(new
-                    {
-                        Message = "Failed to remove POI collection from ElasticSearch. The operation has been rolled back.",
-                    });
-                }
-
-                await transaction.CommitAsync();
-                return Ok(new
-                {
-                    Message = "Your poi collection is deleted successfully!",
-                });
+                return BadRequest("Please provide a valid id!");
             }
-            catch
+
+            await uow.PoiCollectionRepository.DeletePoiCollectionAsync(id);
+            var dbResult = await uow.SaveAsync();
+            if (dbResult <= 0)
             {
                 await transaction.RollbackAsync();
-                throw;
+                return NotFound("Poi collection not found.");
             }
+
+            var esResult = await elasticSearchService.Remove(id.ToString());
+            if (!esResult)
+            {
+                await transaction.RollbackAsync();
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    Message =
+                        "Failed to remove POI collection from ElasticSearch. The operation has been rolled back.",
+                });
+            }
+
+            await transaction.CommitAsync();
+            return Ok(new
+            {
+                Message = "Your poi collection is deleted successfully!",
+            });
         }
-        catch (Exception ex)
+        catch
         {
-            return StatusCode(StatusCodes.Status500InternalServerError,
-                "An error occurred while processing your request.");
+            await transaction.RollbackAsync();
+            throw;
         }
     }
 
