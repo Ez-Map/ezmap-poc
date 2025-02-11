@@ -227,12 +227,6 @@ public class TagControllerTest
         var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
         var token = await TestHelper.GetDefaultUserToken(client);
 
-
-        var tag = new Tag("home", "59 ntt", TestUser.DefaultUser.Id);
-        dbContext.Tags.Add(tag);
-
-        await dbContext.SaveChangesAsync();
-
         using var response = await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Get, $"api/tag/", token);
         response.EnsureSuccessStatusCode();
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -244,8 +238,8 @@ public class TagControllerTest
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             });
 
-        Assert.Equal(tag.Name, responsePoi[0].Name);
-        Assert.Equal(tag.Description, responsePoi[0].Description);
+        Assert.Equal(TestTag.DefaultTag.Name, responsePoi[0].Name);
+        Assert.Equal(TestTag.DefaultTag.Description, responsePoi[0].Description);
     }
 
     [Fact]
