@@ -25,8 +25,6 @@ var configuration = new ConfigurationBuilder()
     .AddEnvironmentVariables()
     .Build();
 
-
-
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(configuration)
     .Enrich.FromLogContext()
@@ -43,7 +41,8 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IIdentityService, IdentityService>();
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<PoiCreateDtoValidator>();
-var appSettings = configuration["AppSecret"];
+var appSettings = builder.Configuration["AppSecret"] ??
+                  throw new InvalidOperationException("AppSecret is not configured");
 var key = Encoding.ASCII.GetBytes(appSettings);
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication(x =>
@@ -105,7 +104,7 @@ if (!environmentName.Equals("Test"))
         var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
         dbContext.Database.Migrate();
     }
-    
+
     var elasticsearchUrl = configuration["ELK:URl"]; // Replace with your Elasticsearch connection string
 
     if (string.IsNullOrEmpty(elasticsearchUrl))
@@ -113,7 +112,7 @@ if (!environmentName.Equals("Test"))
         throw new InvalidOperationException("Elasticsearch URL is not configured.");
     }
 
-    var settings = new ConnectionSettings(new Uri(elasticsearchUrl)) 
+    var settings = new ConnectionSettings(new Uri(elasticsearchUrl))
         .ServerCertificateValidationCallback((sender, certificate, chain, errors) => true)
         .BasicAuthentication("elastic1", "p1vrgOeVbPfN=YOHhOD" +
                                          "a")

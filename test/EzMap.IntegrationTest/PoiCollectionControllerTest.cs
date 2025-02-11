@@ -174,24 +174,9 @@ public class PoiCollectionControllerTest
         var client = app.CreateClient();
         using var scope = app.Services.CreateScope();
         var token = await TestHelper.GetDefaultUserToken(client);
-
-        var poiCol = new PoiCollectionCreateDto
-        (
-            "THANH NUMBER FAV PLACE",
-            "citygarden"
-        );
-        
-        var createResponse = await client.RequestAsJsonAsyncWithToken(HttpMethod.Post, "api/poicollection/", token, poiCol);
-
-        var createJson = await createResponse.Content.ReadAsStringAsync();
-        var createObject = JsonSerializer.Deserialize<PoiColCreateResult>(createJson, new JsonSerializerOptions()
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        });
-        
         
         using var response =
-            await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Delete, $"api/poicollection/{createObject?.Id}",
+            await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Delete, $"api/poicollection/{TestPoiCollection.DefaultPoiCollection.Id}",
                 token);
         response.EnsureSuccessStatusCode();
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);

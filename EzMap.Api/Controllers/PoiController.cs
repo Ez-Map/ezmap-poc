@@ -42,12 +42,7 @@ public class PoiController : ControllerBase
             }
 
             await transaction.CommitAsync();
-            return Ok(new
-            {
-                Message = "Your point of interest is created and indexed successfully!",
-                Name = dto.Name,
-                Id = poiId,
-            });
+            return Ok("Your point of interest is created successfully!");
         }
         catch
         {
@@ -129,10 +124,7 @@ public class PoiController : ControllerBase
             }
 
             await transaction.CommitAsync();
-            return Ok(new
-            {
-                Message = "Your point of interest is deleted successfully!",
-            });
+            return Ok("Your point of interest is deleted successfully!");
         }
         catch
         {

@@ -39,20 +39,11 @@ public class PoiCollectionController : ControllerBase
             if (!esResult)
             {
                 await transaction.RollbackAsync();
-                return StatusCode(StatusCodes.Status500InternalServerError, new
-                {
-                    Message = "Failed to index the POI collection. The operation has been rolled back.",
-                    name = dto.Name
-                });
+                return StatusCode(StatusCodes.Status500InternalServerError);
             }
 
             await transaction.CommitAsync();
-            return Ok(new
-            {
-                Message = "Your poi collection is created and indexed successfully!",
-                Name = dto.Name,
-                Id = poiCollectionId,
-            });
+            return Ok("Your poi collection is created and indexed successfully!");
         }
         catch
         {
@@ -115,8 +106,7 @@ public class PoiCollectionController : ControllerBase
             if (!esResult)
             {
                 await transaction.RollbackAsync();
-                return StatusCode(StatusCodes.Status500InternalServerError,
-                    "Failed to index the POI collection. The operation has been rolled back.");
+                return StatusCode(StatusCodes.Status500InternalServerError);
             }
 
             await transaction.CommitAsync();
@@ -155,18 +145,11 @@ public class PoiCollectionController : ControllerBase
             if (!esResult)
             {
                 await transaction.RollbackAsync();
-                return StatusCode(StatusCodes.Status500InternalServerError, new
-                {
-                    Message =
-                        "Failed to remove POI collection from ElasticSearch. The operation has been rolled back.",
-                });
+                return StatusCode(StatusCodes.Status500InternalServerError);
             }
 
             await transaction.CommitAsync();
-            return Ok(new
-            {
-                Message = "Your poi collection is deleted successfully!",
-            });
+            return Ok("Your poi collection is deleted successfully!");
         }
         catch
         {

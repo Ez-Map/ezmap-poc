@@ -25,6 +25,9 @@ public class TestWebAppFactory<TProgram> : WebApplicationFactory<TProgram> where
             var db = scope.ServiceProvider.GetRequiredService<EzMapContext>();
             db.Database.EnsureCreated();
             db.Users.Add(TestUser.DefaultUser);
+            db.Pois.Add(TestPoi.DefaultPoi);
+            db.PoiCollections.Add(TestPoiCollection.DefaultPoiCollection);
+            db.Tags.Add(TestTag.DefaultTag);
             db.SaveChanges();
         }
 
@@ -35,7 +38,7 @@ public class TestWebAppFactory<TProgram> : WebApplicationFactory<TProgram> where
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Test");
-        
+
         builder.ConfigureServices(services =>
         {
             var dbContextDescriptor = services.SingleOrDefault(
@@ -64,7 +67,7 @@ public class TestWebAppFactory<TProgram> : WebApplicationFactory<TProgram> where
                 var connection = container.GetRequiredService<DbConnection>();
                 options.UseSqlite(connection);
             });
-            
+
             // Add a mocked IElasticSearchService
             var mockElasticSearchService = new Mock<IElasticSearchService>();
 
@@ -72,23 +75,23 @@ public class TestWebAppFactory<TProgram> : WebApplicationFactory<TProgram> where
             mockElasticSearchService
                 .Setup(es => es.AddOrUpdate(It.IsAny<PoiCreateIndexingModel>()))
                 .ReturnsAsync(true);
-            
+
             mockElasticSearchService
                 .Setup(es => es.AddOrUpdate(It.IsAny<PoiUpdateIndexingModel>()))
                 .ReturnsAsync(true);
-            
+
             mockElasticSearchService
                 .Setup(es => es.AddOrUpdate(It.IsAny<TagCreateIndexingModel>()))
                 .ReturnsAsync(true);
-            
+
             mockElasticSearchService
                 .Setup(es => es.AddOrUpdate(It.IsAny<TagUpdateIndexingModel>()))
                 .ReturnsAsync(true);
-            
+
             mockElasticSearchService
                 .Setup(es => es.AddOrUpdate(It.IsAny<PoiCollectionCreateIndexingModel>()))
                 .ReturnsAsync(true);
-            
+
             mockElasticSearchService
                 .Setup(es => es.AddOrUpdate(It.IsAny<PoiCollectionUpdateIndexingModel>()))
                 .ReturnsAsync(true);
@@ -100,10 +103,7 @@ public class TestWebAppFactory<TProgram> : WebApplicationFactory<TProgram> where
             mockElasticSearchService
                 .Setup(es => es.Query(It.IsAny<QueryContainer>())).ReturnsAsync(new List<object>
                 {
-                    () =>
-                    {
-                        new List<object>();
-                    }
+                    () => { new List<object>(); }
                 });
 
             services.AddSingleton(mockElasticSearchService.Object);

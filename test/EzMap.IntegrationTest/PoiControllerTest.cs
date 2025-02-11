@@ -161,22 +161,8 @@ public class PoiControllerTest
         using var scope = app.Services.CreateScope();
         var token = await TestHelper.GetDefaultUserToken(client);
         var esClient = scope.ServiceProvider.GetRequiredService<IElasticSearchService>();
-
-        var poi = new PoiCreateDto
-        (
-            "THANH NUMBER FAV PLACE",
-            "citygarden"
-        );
-
-        var createResponse = await client.RequestAsJsonAsyncWithToken(HttpMethod.Post, "api/poi/", token, poi);
-
-        var createJson = await createResponse.Content.ReadAsStringAsync();
-        var createObject = JsonSerializer.Deserialize<PoiCreateResult>(createJson, new JsonSerializerOptions()
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        });
         
-        var deleteResponse = await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Delete, $"api/poi/{createObject?.Id}", token);
+        var deleteResponse = await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Delete, $"api/poi/{TestPoi.DefaultPoi.Id}", token);
         deleteResponse.EnsureSuccessStatusCode();
         Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
     }
@@ -220,12 +206,6 @@ public class PoiControllerTest
         var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
         var token = await TestHelper.GetDefaultUserToken(client);
 
-
-        var poi = new Poi("home", "59 ntt", TestUser.DefaultUser.Id);
-        dbContext.Pois.Add(poi);
-
-        await dbContext.SaveChangesAsync();
-
         using var response = await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Get, $"api/poi/", token);
         response.EnsureSuccessStatusCode();
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -237,9 +217,8 @@ public class PoiControllerTest
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             });
 
-
-        Assert.Equal(poi.Name, responsePoi[0].Name);
-        Assert.Equal(poi.Address, responsePoi[0].Address);
+        Assert.Equal(TestPoi.DefaultPoi.Name, responsePoi[0].Name);
+        Assert.Equal(TestPoi.DefaultPoi.Address, responsePoi[0].Address);
     }
 
     [Fact]

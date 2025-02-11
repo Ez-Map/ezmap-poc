@@ -54,7 +54,8 @@ public class UserController : ControllerBase
 
             if (userId == null) return new StatusCodeResult(StatusCodes.Status401Unauthorized);
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(configuration["AppSecret"]);
+            var key = Encoding.ASCII.GetBytes(configuration["AppSecret"] ?? 
+                throw new InvalidOperationException("AppSecret is not configured"));
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new Claim[]

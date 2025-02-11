@@ -34,20 +34,11 @@ public class TagController : ControllerBase
             if (!esResult)
             {
                 await transaction.RollbackAsync();
-                return StatusCode(StatusCodes.Status500InternalServerError, new
-                {
-                    Message = "Failed to index the tag. The operation has been rolled back.",
-                    name = dto.Name
-                });
+                return StatusCode(StatusCodes.Status500InternalServerError);
             }
 
             await transaction.CommitAsync();
-            return Ok(new
-            {
-                Message = "Your tag is created and indexed successfully!",
-                Name = dto.Name,
-                Id = tagId,
-            });
+            return Ok("Your tag is created and indexed successfully!");
         }
         catch
         {
@@ -84,8 +75,7 @@ public class TagController : ControllerBase
             if (!esResult)
             {
                 await transaction.RollbackAsync();
-                return StatusCode(StatusCodes.Status500InternalServerError,
-                    "Failed to index the tag. The operation has been rolled back.");
+                return StatusCode(StatusCodes.Status500InternalServerError);
             }
 
             await transaction.CommitAsync();
@@ -138,15 +128,11 @@ public class TagController : ControllerBase
             if (!esResult)
             {
                 await transaction.RollbackAsync();
-                return StatusCode(StatusCodes.Status500InternalServerError,
-                    "Failed to remove tag from ElasticSearch. The operation has been rolled back.");
+                return StatusCode(StatusCodes.Status500InternalServerError);
             }
 
             await transaction.CommitAsync();
-            return Ok(new
-            {
-                Message = "Your tag is deleted successfully!",
-            });
+            return Ok("Your tag is deleted successfully!");
         }
         catch
         {

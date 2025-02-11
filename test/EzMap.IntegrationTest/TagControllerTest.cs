@@ -181,23 +181,9 @@ public class TagControllerTest
         var client = app.CreateClient();
         using var scope = app.Services.CreateScope();
         var token = await TestHelper.GetDefaultUserToken(client);
-        var esClient = scope.ServiceProvider.GetRequiredService<IElasticSearchService>();
-
-        var tag = new TagCreateDto
-        (
-            "THANH NUMBER FAV PLACE",
-            "citygarden"
-        );
         
-        var createResponse = await client.RequestAsJsonAsyncWithToken(HttpMethod.Post, "api/tag/", token, tag);
-
-        var createJson = await createResponse.Content.ReadAsStringAsync();
-        var createObject = JsonSerializer.Deserialize<TagCreateResult>(createJson, new JsonSerializerOptions()
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        });
         var deleteResponse =
-            await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Delete, $"api/tag/{createObject?.Id}", token);
+            await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Delete, $"api/tag/{TestTag.DefaultTag?.Id}", token);
         deleteResponse.EnsureSuccessStatusCode();
         Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
     }
