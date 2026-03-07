@@ -1,9 +1,11 @@
 ﻿using EzMap.Api.Services;
 using EzMap.Domain.Dtos;
+using EzMap.Domain.Indexes;
 using EzMap.Domain.Repositories;
 using EzMap.Domain.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Nest;
 
 namespace EzMap.Api.Controllers;
 
@@ -14,29 +16,76 @@ public class TagController : ControllerBase
     [Authorize]
     [HttpPost("")]
     public async Task<IActionResult> Create([FromBody] TagCreateDto dto, [FromServices] IUnitOfWork uow,
-        [FromServices] IIdentityService identityService)
+        [FromServices] IIdentityService identityService, [FromServices] IElasticSearchService elasticSearchService)
     {
-        uow.TagRepository.AddTag(dto.WithUserId(identityService.GetUserId()));
-        return await uow.SaveAsync() > 0
-            ? Ok("Your tag is created successfully!")
-            : new StatusCodeResult(StatusCodes.Status500InternalServerError);
+        await using var transaction = await uow.BeginTransactionAsync();
+        try
+        {
+            var tagId = uow.TagRepository.AddTag(dto.WithUserId(identityService.GetUserId()));
+            var dbResult = await uow.SaveAsync();
+            if (dbResult <= 0)
+            {
+                await transaction.RollbackAsync();
+                return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+            }
+
+            var tagCreateIndex = new TagCreateIndexingModel(tagId, dto.Name, dto.Description);
+            var esResult = await elasticSearchService.AddOrUpdate(tagCreateIndex);
+            if (!esResult)
+            {
+                await transaction.RollbackAsync();
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+
+            await transaction.CommitAsync();
+            return Ok("Your tag is created and indexed successfully!");
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 
     [Authorize]
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> UpdateTag([FromBody] TagUpdateDto dto, [FromServices] IUnitOfWork uow,
-        [FromServices] IIdentityService identityService)
+        [FromServices] IIdentityService identityService, [FromServices] IElasticSearchService elasticSearchService)
     {
-        var dbTag = await uow.TagRepository.GetTagById(identityService.GetUserId(), dto.Id);
-
-        if (dbTag is not null)
+        await using var transaction = await uow.BeginTransactionAsync();
+        try
         {
-            uow.TagRepository.UpdateTag(dbTag, dto.WithUserId(identityService.GetUserId()));
-        }
+            var dbTag = await uow.TagRepository.GetTagById(identityService.GetUserId(), dto.Id);
 
-        return await uow.SaveAsync() > 0
-            ? Ok("Your tag is updated successfully!")
-            : new StatusCodeResult(StatusCodes.Status500InternalServerError);
+            if (dbTag is null)
+            {
+                return NotFound("Tag not found.");
+            }
+
+            uow.TagRepository.UpdateTag(dbTag, dto.WithUserId(identityService.GetUserId()));
+            var dbResult = await uow.SaveAsync();
+            if (dbResult == 0)
+            {
+                Console.WriteLine("No changes detected. Skipping commit.");
+                return Ok("No changes were made to the tag.");
+            }
+
+            var tagUpdateIndex = new TagUpdateIndexingModel(dto.Id, dto.Name, dto.Description);
+            var esResult = await elasticSearchService.AddOrUpdate(tagUpdateIndex);
+            if (!esResult)
+            {
+                await transaction.RollbackAsync();
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+
+            await transaction.CommitAsync();
+            return Ok("Your tag is updated successfully!");
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 
     [Authorize]
@@ -56,18 +105,40 @@ public class TagController : ControllerBase
 
     [Authorize]
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> DeleteTag(Guid id, [FromServices] IUnitOfWork uow)
+    public async Task<IActionResult> DeleteTag(Guid id, [FromServices] IUnitOfWork uow,
+        [FromServices] IElasticSearchService elasticSearchService)
     {
         if (string.IsNullOrEmpty(id.ToString()))
         {
             return BadRequest("Please provide a valid id!");
         }
 
-        await uow.TagRepository.DeleteTagAsync(id);
+        await using var transaction = await uow.BeginTransactionAsync();
+        try
+        {
+            await uow.TagRepository.DeleteTagAsync(id);
+            var dbResult = await uow.SaveAsync();
+            if (dbResult <= 0)
+            {
+                await transaction.RollbackAsync();
+                return NotFound("Tag not found.");
+            }
 
-        return await uow.SaveAsync() > 0
-            ? Ok("Your tag is deleted successfully!")
-            : new StatusCodeResult(StatusCodes.Status500InternalServerError);
+            var esResult = await elasticSearchService.Remove(id.ToString());
+            if (!esResult)
+            {
+                await transaction.RollbackAsync();
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+
+            await transaction.CommitAsync();
+            return Ok("Your tag is deleted successfully!");
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 
     [Authorize]

@@ -1,7 +1,6 @@
 using System.Text;
-using EzMap.Api.Controllers;
+using EzMap.Api.Middleware;
 using EzMap.Api.Services;
-using EzMap.Domain;
 using EzMap.Domain.Dtos;
 using EzMap.Domain.Models;
 using EzMap.Domain.Repositories;
@@ -12,8 +11,28 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Nest;
+using Serilog;
+using Serilog.Exceptions;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var environmentName = builder.Environment.EnvironmentName;
+
+var configuration = new ConfigurationBuilder()
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
+    .AddJsonFile($"appsettings.{environmentName}.json", optional: true, reloadOnChange: false)
+    .AddEnvironmentVariables()
+    .Build();
+
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(configuration)
+    .Enrich.FromLogContext()
+    .Enrich.WithExceptionDetails()
+    .CreateLogger();
+
+builder.Logging.AddSerilog();
+
 // Add services to the container.
 builder.Services.AddDbContext<EzMapContext>(
     options => { options.UseSqlServer(builder.Configuration.GetConnectionString("myDb1")); }
@@ -22,8 +41,8 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IIdentityService, IdentityService>();
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<PoiCreateDtoValidator>();
-
-var appSettings = builder.Configuration.GetValue<string>("AppSecret");
+var appSettings = builder.Configuration["AppSecret"] ??
+                  throw new InvalidOperationException("AppSecret is not configured");
 var key = Encoding.ASCII.GetBytes(appSettings);
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication(x =>
@@ -78,19 +97,42 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddHttpContextAccessor();
 
+if (!environmentName.Equals("Test"))
+{
+    using (var scope = builder.Services.BuildServiceProvider().CreateScope())
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
+        dbContext.Database.Migrate();
+    }
+
+    var elasticsearchUrl = configuration["ELK:URl"]; // Replace with your Elasticsearch connection string
+
+    if (string.IsNullOrEmpty(elasticsearchUrl))
+    {
+        throw new InvalidOperationException("Elasticsearch URL is not configured.");
+    }
+
+    var settings = new ConnectionSettings(new Uri(elasticsearchUrl))
+        .ServerCertificateValidationCallback((sender, certificate, chain, errors) => true)
+        .BasicAuthentication("elastic1", "p1vrgOeVbPfN=YOHhOD" +
+                                         "a")
+        .EnableApiVersioningHeader();
+    var client = new ElasticClient(settings);
+
+    builder.Services.AddSingleton<IElasticClient>(client);
+    builder.Services.AddSingleton<IElasticSearchService, ElasticSearchService>();
+}
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
-
 app.MapControllers();
-
+app.UseMiddleware<ExceptionMiddleware>();
+app.UseHttpsRedirection();
 app.Run();
 
 public partial class Program

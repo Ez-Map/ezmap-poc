@@ -1,5 +1,8 @@
-﻿using EzMap.Api.Services;
+﻿using System.Security.Cryptography.X509Certificates;
+using System.Transactions;
+using EzMap.Api.Services;
 using EzMap.Domain.Dtos;
+using EzMap.Domain.Indexes;
 using EzMap.Domain.Models;
 using EzMap.Domain.Repositories;
 using EzMap.Domain.Services;
@@ -16,13 +19,37 @@ public class PoiCollectionController : ControllerBase
     [HttpPost("")]
     public async Task<IActionResult> AddPoiCollection([FromBody] PoiCollectionCreateDto dto,
         [FromServices] IUnitOfWork uow,
-        [FromServices] IIdentityService identityService)
+        [FromServices] IIdentityService identityService, [FromServices] IElasticSearchService elasticSearchService)
     {
-        uow.PoiCollectionRepository.AddPoiCollection(dto.WithUserId(identityService.GetUserId()));
+        await using var transaction = await uow.BeginTransactionAsync();
+        try
+        {
+            var poiCollectionId =
+                uow.PoiCollectionRepository.AddPoiCollection(dto.WithUserId(identityService.GetUserId()));
+            var dbResult = await uow.SaveAsync();
+            if (dbResult <= 0)
+            {
+                await transaction.RollbackAsync();
+                return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+            }
 
-        return await uow.SaveAsync() > 0
-            ? Ok("Your poi collection is created successfully!")
-            : new StatusCodeResult(StatusCodes.Status500InternalServerError);
+            var poiCollectionCreateIndex =
+                new PoiCollectionCreateIndexingModel(poiCollectionId, dto.Name, dto.Description);
+            var esResult = await elasticSearchService.AddOrUpdate(poiCollectionCreateIndex);
+            if (!esResult)
+            {
+                await transaction.RollbackAsync();
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+
+            await transaction.CommitAsync();
+            return Ok("Your poi collection is created and indexed successfully!");
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 
     [Authorize]
@@ -46,37 +73,89 @@ public class PoiCollectionController : ControllerBase
         [FromServices] IIdentityService identityService, [FromQuery] string keyword)
     {
         var result = await uow.PoiCollectionRepository.Search(identityService.GetUserId(), keyword);
-        return result.Count > 0 ? Ok(result) : new StatusCodeResult(StatusCodes.Status204NoContent);
+        return result?.Count > 0 ? Ok(result) : new StatusCodeResult(StatusCodes.Status204NoContent);
     }
 
     [Authorize]
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update([FromBody] PoiCollectionUpdateDto dto, [FromServices] IUnitOfWork uow,
-        [FromServices] IIdentityService identityService)
+        [FromServices] IIdentityService identityService, [FromServices] IElasticSearchService elasticSearchService)
     {
-        var dbPoiCol = await uow.PoiCollectionRepository.GetPoiCollectionById(identityService.GetUserId(), dto.Id);
+        await using var transaction = await uow.BeginTransactionAsync();
+        try
+        {
+            var dbPoiCol =
+                await uow.PoiCollectionRepository.GetPoiCollectionById(identityService.GetUserId(), dto.Id);
 
-        if (dbPoiCol is not null) uow.PoiCollectionRepository.UpdatePoiCollectionAsync(dbPoiCol, dto);
+            if (dbPoiCol is null)
+            {
+                return NotFound("Poi collection not found.");
+            }
 
-        return await uow.SaveAsync() > 0
-            ? Ok("Your poi collection is updated successfully")
-            : new StatusCodeResult(StatusCodes.Status500InternalServerError);
+            uow.PoiCollectionRepository.UpdatePoiCollectionAsync(dbPoiCol, dto);
+            var dbResult = await uow.SaveAsync();
+            
+            if (dbResult == 0)
+            {
+                Console.WriteLine("No changes detected. Skipping commit.");
+                return Ok("No changes were made to the POI collection.");
+            }
+
+            var poiColUpdateIndex = new PoiCollectionUpdateIndexingModel(dto.Id, dto.Name, dto.Description);
+            var esResult = await elasticSearchService.AddOrUpdate(poiColUpdateIndex);
+            if (!esResult)
+            {
+                await transaction.RollbackAsync();
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+
+            await transaction.CommitAsync();
+            return Ok("Your poi collection is updated successfully");
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 
     [Authorize]
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id, [FromServices] IUnitOfWork uow)
+    public async Task<IActionResult> Delete(Guid id, [FromServices] IUnitOfWork uow,
+        [FromServices] IElasticSearchService elasticSearchService)
     {
-        if (string.IsNullOrEmpty(id.ToString()))
+        await using var transaction = await uow.BeginTransactionAsync();
+
+        try
         {
-            return BadRequest("Please provide a valid id!");
+            if (string.IsNullOrEmpty(id.ToString()))
+            {
+                return BadRequest("Please provide a valid id!");
+            }
+
+            await uow.PoiCollectionRepository.DeletePoiCollectionAsync(id);
+            var dbResult = await uow.SaveAsync();
+            if (dbResult <= 0)
+            {
+                await transaction.RollbackAsync();
+                return NotFound("Poi collection not found.");
+            }
+
+            var esResult = await elasticSearchService.Remove(id.ToString());
+            if (!esResult)
+            {
+                await transaction.RollbackAsync();
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+
+            await transaction.CommitAsync();
+            return Ok("Your poi collection is deleted successfully!");
         }
-
-        await uow.PoiCollectionRepository.DeletePoiCollectionAsync(id);
-
-        return await uow.SaveAsync() > 0
-            ? Ok("Your poi collection is deleted successfully!")
-            : new StatusCodeResult(StatusCodes.Status500InternalServerError);
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 
     [Authorize]
@@ -86,6 +165,6 @@ public class PoiCollectionController : ControllerBase
     {
         var result = await uow.PoiCollectionRepository.GetListPoiCollectionAsync(identityService.GetUserId());
 
-        return result.Count > 0 ? Ok(result) : new StatusCodeResult(StatusCodes.Status204NoContent);
+        return result?.Count > 0 ? Ok(result) : new StatusCodeResult(StatusCodes.Status204NoContent);
     }
 }

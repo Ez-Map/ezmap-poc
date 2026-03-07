@@ -1,5 +1,6 @@
 ﻿using System.Net.Http.Headers;
 using System.Text.Json;
+using System.Web;
 
 namespace EzMap.IntegrationTest.Infrastructure;
 
@@ -18,7 +19,32 @@ public static class HttpHelper
         {
             request.Content = new StringContent(JsonSerializer.Serialize(dto, new JsonSerializerOptions()
             {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            }), System.Text.Encoding.UTF8, "application/json");
+        }
+
+        return client.SendAsync(request);
+    }
+
+    public static Task<HttpResponseMessage> RequestAsJsonAsyncWithTokenAndUrlParam<T>(this HttpClient client, HttpMethod method,
+        string baseUri,
+        string paramValue,
+        string token,
+        T? dto = default)
+    {
+        string encodedParamValue = HttpUtility.UrlEncode(paramValue);
+
+        string fullUri = $"{baseUri}/{encodedParamValue}";
+
+        HttpRequestMessage request = new HttpRequestMessage(method, fullUri);
+
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        if (dto is not null)
+        {
+            request.Content = new StringContent(JsonSerializer.Serialize(dto, new JsonSerializerOptions()
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             }), System.Text.Encoding.UTF8, "application/json");
         }
 

@@ -2,6 +2,7 @@
 using EzMap.Domain.Dtos;
 using EzMap.Domain.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using BC = BCrypt.Net.BCrypt;
 
 
@@ -18,9 +19,12 @@ public class UserRepository : IUserRepository
 {
     private readonly EzMapContext _dbContext;
 
-    public UserRepository(EzMapContext dbContext)
+    private readonly ILogger<UserRepository> _logger;
+
+    public UserRepository(EzMapContext dbContext, ILogger<UserRepository> logger)
     {
         _dbContext = dbContext;
+        _logger = logger;
     }
 
     public async Task<bool> CreateUser(UserCreationDto userCreationDto, CancellationToken token = default)
@@ -31,7 +35,11 @@ public class UserRepository : IUserRepository
 
         _dbContext.Users.Add(user);
 
-        return await _dbContext.SaveChangesAsync(token) > 0;
+        await _dbContext.SaveChangesAsync(token);
+        
+        _logger.LogInformation("User created successfully: {Username}", userCreationDto.UserName);
+        
+        return true;
     }
 
     public async Task<Guid?> SignIn(UserSignInDto userSignInDto, CancellationToken token = default)

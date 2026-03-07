@@ -41,7 +41,7 @@ namespace EzMap.Domain.Migrations
                 column: "UserId",
                 principalTable: "User",
                 principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
+                onDelete: ReferentialAction.NoAction);
 
             migrationBuilder.AddForeignKey(
                 name: "FK_Tag_User_UserId",

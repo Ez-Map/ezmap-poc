@@ -202,7 +202,7 @@ namespace EzMap.Domain.Migrations
 
                     b.HasIndex("TagsId");
 
-                    b.ToTable("PoiCollectionTag");
+                    b.ToTable("PoiCollectionTag", (string)null);
                 });
 
             modelBuilder.Entity("PoiPoiCollection", b =>
@@ -217,7 +217,7 @@ namespace EzMap.Domain.Migrations
 
                     b.HasIndex("PoisId");
 
-                    b.ToTable("PoiPoiCollection");
+                    b.ToTable("PoiPoiCollection", (string)null);
                 });
 
             modelBuilder.Entity("EzMap.Domain.Models.PoiCollection", b =>

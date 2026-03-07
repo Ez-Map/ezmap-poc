@@ -1,10 +1,14 @@
-﻿using System.Net;
+﻿using System.Collections;
+using System.Net;
 using System.Text.Json;
+using EzMap.Api.Services;
 using EzMap.Domain;
 using EzMap.Domain.Dtos;
 using EzMap.Domain.Models;
+using EzMap.Domain.Result;
 using EzMap.IntegrationTest.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
+using Nest;
 
 namespace EzMap.IntegrationTest;
 
@@ -155,20 +159,12 @@ public class PoiControllerTest
         var app = new TestWebAppFactory<Program>();
         var client = app.CreateClient();
         using var scope = app.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
         var token = await TestHelper.GetDefaultUserToken(client);
-
-
-        var user = new User("thanh", "thanh", "thanh", "thanh");
-        dbContext.Users.Add(user);
-        var poi = new Poi("home", "59 ntt", user.Id);
-        dbContext.Pois.Add(poi);
-
-        await dbContext.SaveChangesAsync();
-        using var response =
-            await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Delete, $"api/poi/{poi.Id}", token);
-        response.EnsureSuccessStatusCode();
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var esClient = scope.ServiceProvider.GetRequiredService<IElasticSearchService>();
+        
+        var deleteResponse = await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Delete, $"api/poi/{TestPoi.DefaultPoi.Id}", token);
+        deleteResponse.EnsureSuccessStatusCode();
+        Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
     }
 
     [Fact]
@@ -210,12 +206,6 @@ public class PoiControllerTest
         var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
         var token = await TestHelper.GetDefaultUserToken(client);
 
-
-        var poi = new Poi("home", "59 ntt", TestUser.DefaultUser.Id);
-        dbContext.Pois.Add(poi);
-
-        await dbContext.SaveChangesAsync();
-
         using var response = await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Get, $"api/poi/", token);
         response.EnsureSuccessStatusCode();
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -227,9 +217,8 @@ public class PoiControllerTest
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             });
 
-
-        Assert.Equal(poi.Name, responsePoi[0].Name);
-        Assert.Equal(poi.Address, responsePoi[0].Address);
+        Assert.Equal(TestPoi.DefaultPoi.Name, responsePoi[0].Name);
+        Assert.Equal(TestPoi.DefaultPoi.Address, responsePoi[0].Address);
     }
 
     [Fact]

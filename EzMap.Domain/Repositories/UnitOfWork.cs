@@ -3,7 +3,7 @@ using EzMap.Domain.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace EzMap.Domain.Repositories;
 
@@ -16,10 +16,12 @@ public interface IUnitOfWork
     
     Task<int> SaveAsync();
     IDbContextTransaction BeginTransaction();
+    Task<IDbContextTransaction> BeginTransactionAsync();
 }
 
-public class UnitOfWork : IUnitOfWork
+public class UnitOfWork : IDisposable ,IUnitOfWork
 {
+    private ILoggerFactory _loggerFactory;
     protected readonly EzMapContext _context;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private PoiRepository? _poiRepository;
@@ -27,32 +29,32 @@ public class UnitOfWork : IUnitOfWork
     private TagRepository? _tagRepository;
     private PoiCollectionRepository? _poiCollectionRepository;
 
-    public IPoiCollectionRepository PoiCollectionRepository
+    public UnitOfWork(ILoggerFactory loggerFactory, EzMapContext context, IHttpContextAccessor httpContextAccessor)
     {
-        get => _poiCollectionRepository ?? new PoiCollectionRepository(_context);
-    }
-
-    public ITagRepository TagRepository
-    {
-        get => _tagRepository ?? new TagRepository(_context);
-    }
-
-    public IPoiRepository PoiRepository
-    {
-        get => _poiRepository ?? new PoiRepository(_context);
-    }
-
-    public IUserRepository UserRepository
-    {
-        get => _userRepository ?? new UserRepository(_context);
-    }
-
-    public UnitOfWork(EzMapContext context, IHttpContextAccessor httpContextAccessor)
-    {
+        _loggerFactory = loggerFactory;
         _context = context;
         _httpContextAccessor = httpContextAccessor;
     }
 
+    public IPoiCollectionRepository PoiCollectionRepository
+    {
+        get => _poiCollectionRepository ?? new PoiCollectionRepository(_context, _loggerFactory.CreateLogger<PoiCollection>());
+    }
+
+    public ITagRepository TagRepository
+    {
+        get => _tagRepository ?? new TagRepository(_context, _loggerFactory.CreateLogger<TagRepository>());
+    }
+
+    public IPoiRepository PoiRepository
+    {
+        get => _poiRepository ?? new PoiRepository(_context, _loggerFactory.CreateLogger<PoiRepository>());
+    }
+
+    public IUserRepository UserRepository
+    {
+        get => _userRepository ?? new UserRepository(_context, _loggerFactory.CreateLogger<UserRepository>());
+    }
 
     public async Task<int> SaveAsync()
     {
@@ -63,6 +65,11 @@ public class UnitOfWork : IUnitOfWork
     public IDbContextTransaction BeginTransaction()
     {
         return _context.Database.BeginTransaction();
+    }
+
+    public async Task<IDbContextTransaction> BeginTransactionAsync()
+    {
+        return await _context.Database.BeginTransactionAsync();
     }
 
     private void SetBaseAuditInfo()
@@ -97,5 +104,10 @@ public class UnitOfWork : IUnitOfWork
                     break;
             }
         }
+    }
+
+    public void Dispose()
+    {
+        _context.Dispose();
     }
 }

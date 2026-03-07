@@ -48,12 +48,14 @@ public class UserController : ControllerBase
     public async Task<IActionResult> SignIn([FromServices] IConfiguration configuration,
         [FromServices] IUnitOfWork uow, [FromBody] UserSignInDto dto)
     {
-        Guid? userId = await uow.UserRepository.SignIn(dto);
-
-        if (userId != null)
+        try
         {
+            Guid? userId = await uow.UserRepository.SignIn(dto);
+
+            if (userId == null) return new StatusCodeResult(StatusCodes.Status401Unauthorized);
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(configuration["AppSecret"]);
+            var key = Encoding.ASCII.GetBytes(configuration["AppSecret"] ?? 
+                throw new InvalidOperationException("AppSecret is not configured"));
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new Claim[]
@@ -68,7 +70,11 @@ public class UserController : ControllerBase
 
             return Ok(tokenHandler.WriteToken(token));
         }
-
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message);
+        }
+        
         return new StatusCodeResult(StatusCodes.Status401Unauthorized);
     }
 }

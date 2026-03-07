@@ -1,10 +1,13 @@
 ﻿using System.Net;
 using System.Text.Json;
+using EzMap.Api.Services;
 using EzMap.Domain.Constants;
 using EzMap.Domain.Dtos;
 using EzMap.Domain.Models;
+using EzMap.Domain.Result;
 using EzMap.IntegrationTest.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
+using Nest;
 
 namespace EzMap.IntegrationTest;
 
@@ -170,22 +173,11 @@ public class PoiCollectionControllerTest
         var app = new TestWebAppFactory<Program>();
         var client = app.CreateClient();
         using var scope = app.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
-
         var token = await TestHelper.GetDefaultUserToken(client);
-
-        var user = new User("thanh", "thanh", "thanh", "thanh");
-        dbContext.Users.Add(user);
-
-        var poiCol = new PoiCollection("home", "59 ntt", TestUser.DefaultUser.Id);
-        dbContext.PoiCollections.Add(poiCol);
-
-        await dbContext.SaveChangesAsync();
-
+        
         using var response =
-            await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Delete, $"api/poicollection/{poiCol.Id}",
+            await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Delete, $"api/poicollection/{TestPoiCollection.DefaultPoiCollection.Id}",
                 token);
-
         response.EnsureSuccessStatusCode();
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }

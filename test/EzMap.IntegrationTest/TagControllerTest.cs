@@ -1,9 +1,12 @@
 ﻿using System.Net;
 using System.Text.Json;
+using EzMap.Api.Services;
 using EzMap.Domain.Dtos;
 using EzMap.Domain.Models;
+using EzMap.Domain.Result;
 using EzMap.IntegrationTest.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
+using Nest;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace EzMap.IntegrationTest;
@@ -177,17 +180,12 @@ public class TagControllerTest
         var app = new TestWebAppFactory<Program>();
         var client = app.CreateClient();
         using var scope = app.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
         var token = await TestHelper.GetDefaultUserToken(client);
-        var user = new User("thanh", "thanh", "thanh", "thanh");
-        dbContext.Users.Add(user);
-        var tag = new Tag("home", "59 ntt", user.Id);
-        dbContext.Tags.Add(tag);
-        await dbContext.SaveChangesAsync();
-        using var response =
-            await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Delete, $"api/tag/{tag.Id}", token);
-        response.EnsureSuccessStatusCode();
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        
+        var deleteResponse =
+            await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Delete, $"api/tag/{TestTag.DefaultTag?.Id}", token);
+        deleteResponse.EnsureSuccessStatusCode();
+        Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
     }
 
     [Fact]
@@ -229,12 +227,6 @@ public class TagControllerTest
         var dbContext = scope.ServiceProvider.GetRequiredService<EzMapContext>();
         var token = await TestHelper.GetDefaultUserToken(client);
 
-
-        var tag = new Tag("home", "59 ntt", TestUser.DefaultUser.Id);
-        dbContext.Tags.Add(tag);
-
-        await dbContext.SaveChangesAsync();
-
         using var response = await client.RequestAsJsonAsyncWithToken<object>(HttpMethod.Get, $"api/tag/", token);
         response.EnsureSuccessStatusCode();
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -246,8 +238,8 @@ public class TagControllerTest
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             });
 
-        Assert.Equal(tag.Name, responsePoi[0].Name);
-        Assert.Equal(tag.Description, responsePoi[0].Description);
+        Assert.Equal(TestTag.DefaultTag.Name, responsePoi[0].Name);
+        Assert.Equal(TestTag.DefaultTag.Description, responsePoi[0].Description);
     }
 
     [Fact]

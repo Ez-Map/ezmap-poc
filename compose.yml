@@ -1,0 +1,53 @@
+version: '3'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: EzMap.Api/Dockerfile
+    ports:
+      - "5000:80"
+      - "5003:443"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__myDb1=Server=db;Database=myDb1;User Id=sa;Password=SqlServer2017!;TrustServerCertificate=True
+    depends_on:
+      - db
+      - seq
+      - es
+
+  db:
+    image: mcr.microsoft.com/mssql/server:2017-latest
+    environment:
+      SA_PASSWORD: "SqlServer2017"
+      ACCEPT_EULA: "Y"
+
+  seq:
+    image: datalust/seq
+    environment:
+      ACCEPT_EULA: "Y"
+      
+  es:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    environment:
+      discovery.type: 'single-node'
+      xpack.security.enabled: 'false'
+      xpack.security.http.ssl.enabled: 'false'  # Disable SSL
+    ports:
+      - "5001:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    environment:
+      ELASTICSEARCH_HOSTS: http://es:9200
+    ports:
+      - "5002:5601"
+    depends_on:
+      - es
+  
+volumes:
+  data:
+  es_data:
+      
