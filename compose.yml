@@ -10,7 +10,7 @@ services:
       - "5003:443"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__myDb1=;
+      - ConnectionStrings__myDb1=Server=db;Database=myDb1;User Id=sa;Password=SqlServer2017!;TrustServerCertificate=True
     depends_on:
       - db
       - seq
@@ -19,7 +19,7 @@ services:
   db:
     image: mcr.microsoft.com/mssql/server:2017-latest
     environment:
-      SA_PASSWORD: ""
+      SA_PASSWORD: "SqlServer2017"
       ACCEPT_EULA: "Y"
 
   seq:
